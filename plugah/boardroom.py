@@ -131,11 +131,55 @@ class Startup:
     async def _generate_prd(
         self, problem: str, answers: list[str], budget_usd: float
     ) -> dict[str, Any]:
-        """Generate PRD from problem and discovery answers"""
+        """Generate PRD from problem and discovery answers (OpenAI-backed when not in mock mode)"""
 
-        # For demo, create a structured PRD
-        # In production, this would use an LLM to analyze answers
+        import json
+        import os
 
+        if os.getenv("PLUGAH_MODE", "").lower() != "mock":
+            try:
+                from .llm import LLM
+
+                system = (
+                    "You are a product strategist. Build a concise PRD JSON from discovery. "
+                    "Include keys: title, problem_statement, budget, domain, users, success_criteria (list), "
+                    "constraints (list), timeline, integrations, objectives (list of {id,title,description}), "
+                    "key_results (list of {id,objective_id,metric,target,current?,unit?}), non_goals (list)."
+                )
+                user = json.dumps(
+                    {
+                        "problem": problem,
+                        "budget": budget_usd,
+                        "answers": answers,
+                    },
+                    ensure_ascii=False,
+                )
+                text = LLM().reason(system=system, user=user)
+                if text:
+                    data = json.loads(text)
+                    if (
+                        isinstance(data, dict)
+                        and data.get("title")
+                        and data.get("problem_statement")
+                    ):
+                        # Ensure required defaults and types
+                        data.setdefault("budget", budget_usd)
+                        data.setdefault("domain", self._infer_domain(problem))
+                        data.setdefault("users", answers[0] if answers else "General users")
+                        data.setdefault("success_criteria", [])
+                        data.setdefault("constraints", [])
+                        data.setdefault("timeline", "ASAP")
+                        data.setdefault("integrations", "None")
+                        data.setdefault("objectives", [])
+                        data.setdefault("key_results", [])
+                        data.setdefault("non_goals", [])
+                        data.setdefault("created_at", datetime.utcnow().isoformat())
+                        return data
+            except Exception:
+                # Fall through to heuristic PRD
+                pass
+
+        # Heuristic fallback (used in mock mode and on LLM failure)
         prd = {
             "title": self._extract_title(problem),
             "problem_statement": problem,
