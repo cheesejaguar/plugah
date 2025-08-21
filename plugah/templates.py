@@ -267,9 +267,9 @@ def compose_system_prompt(
     role: str,
     level: str,
     project_title: str,
-    domain: str | None = None,
-    specialization: str | None = None,
-    context: dict | None = None
+    domain: Optional[str] = None,
+    specialization: Optional[str] = None,
+    context: Optional[dict] = None
 ) -> str:
     """Compose a system prompt for an agent based on role and context"""
 

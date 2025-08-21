@@ -4,7 +4,7 @@ Organizational Agent Graph (OAG) schema definitions using Pydantic v2
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional, Literal
+from typing import A, Optionalny, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -181,7 +181,7 @@ class OAG(BaseModel):
     def get_tasks(self) -> dict[str, TaskSpec]:
         return {k: v for k, v in self.nodes.items() if isinstance(v, TaskSpec)}
 
-    def get_node(self, node_id: str) -> Optional[Union[AgentSpec, TaskSpec]]:
+    def get_node(self, node_id: str) -> AgentSpec | Optional[TaskSpec]:
         return self.nodes.get(node_id)
 
     def add_node(self, node: AgentSpec | TaskSpec):

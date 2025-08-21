@@ -15,7 +15,7 @@ class WriterTool(BaseTool):
         self,
         content_type: str,
         topic: str,
-        context: str | None = None
+        context: Optional[str] = None
     ) -> str:
         """Generate written content"""
 
@@ -33,7 +33,7 @@ class WriterTool(BaseTool):
         self,
         content_type: str,
         topic: str,
-        context: str | None = None
+        context: Optional[str] = None
     ) -> str:
         """Async content generation"""
         return self._run(content_type, topic, context)

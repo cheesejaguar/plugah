@@ -6,7 +6,7 @@ import asyncio
 import time
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Optional
+from typing import A, Optionalny
 
 import networkx as nx
 from crewai import Crew, Task

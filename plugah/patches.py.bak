@@ -4,7 +4,7 @@ JSON-Patch helpers (RFC6902) + audit log
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import A, Optionalny
 
 import jsonpatch
 

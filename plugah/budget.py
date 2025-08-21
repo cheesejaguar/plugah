@@ -3,7 +3,7 @@ CFO utilities: cost estimation, hard/soft caps, spend telemetry
 """
 
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 from .oag_schema import BudgetModel, BudgetPolicy, RoleLevel
 
@@ -182,14 +182,14 @@ class CostEstimator:
     """Estimate costs for various operations"""
 
     # Model costs per 1k tokens (approximate)
-    MODEL_COSTS = {
+    MODEL_COSTS: ClassVar[dict[str, float]] = {
         "gpt-4-turbo": 0.01,
         "gpt-3.5-turbo": 0.002,
         "gpt-3.5-turbo-instruct": 0.0015
     }
 
     # Average tokens per interaction by role level
-    TOKENS_BY_LEVEL = {
+    TOKENS_BY_LEVEL: ClassVar[dict[RoleLevel, int]] = {
         RoleLevel.C_SUITE: 2000,
         RoleLevel.VP: 1500,
         RoleLevel.DIRECTOR: 1000,

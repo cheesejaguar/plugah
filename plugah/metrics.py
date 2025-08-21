@@ -92,7 +92,7 @@ class MetricsEngine:
             "by_manager": defaultdict(lambda: {"okr_attainment": [], "kpi_attainment": []})
         }
 
-        for agent_id, agent in self.oag.get_agents().items():
+        for _, agent in self.oag.get_agents().items():
             # Calculate agent's metrics
             okr_attainments = [self.calculate_okr_attainment(okr) for okr in agent.okrs]
             kpi_attainments = [self.calculate_kpi_attainment(kpi) for kpi in agent.kpis]

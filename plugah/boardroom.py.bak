@@ -5,7 +5,7 @@ Top orchestrator: CEO/CTO/CFO + startup discovery, patch loop
 import uuid
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Optional
+from typing import A, Optionalny
 
 from .audit import AuditLogger
 from .budget import CFO, BudgetManager

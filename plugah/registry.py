@@ -261,7 +261,7 @@ class ToolSelector:
         return total_cost
 
 
-def get_specialization_for_domain(domain: str, role: str) -> str | None:
+def get_specialization_for_domain(domain: str, role: str) -> Optional[str]:
     """Get appropriate specialization based on domain and role"""
 
     domain_specializations = {

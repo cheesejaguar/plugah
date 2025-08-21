@@ -49,7 +49,7 @@ class Planner:
         project_title = prd.get("title", "Project")
         domain = prd.get("domain", "general")
         objectives = prd.get("objectives", [])
-        constraints = prd.get("constraints", [])
+        # constraints = prd.get("constraints", [])  # For future use
         success_criteria = prd.get("success_criteria", [])
 
         # Determine budget policy

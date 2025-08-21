@@ -58,7 +58,7 @@ def print_oag(oag: dict):
 
     # Group by level
     by_level = {}
-    for agent_id, agent in agents.items():
+    for _, agent in agents.items():
         if agent.get("node_type") == "agent":
             level = agent.get("level", "IC")
             if level not in by_level:
@@ -171,7 +171,7 @@ def print_execution_summary(results: dict):
 async def run_demo(
     prompt: str,
     budget: float,
-    questions: list | None = None,
+    questions: Optional[list] = None,
     verbose: bool = False
 ):
     """Run the full demo flow"""
@@ -285,7 +285,7 @@ async def run_demo(
         console.print(f"[green]✓[/green] Patches saved to: {patches_path}")
 
     # Generate audit report
-    report = boardroom.audit_logger.generate_summary_report()
+    boardroom.audit_logger.generate_summary_report()
     console.print(f"[green]✓[/green] Audit report saved to: .runs/{boardroom.project_id}/artifacts/summary_report.json")
 
     return boardroom.project_id
