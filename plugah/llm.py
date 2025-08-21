@@ -8,9 +8,6 @@ Usage:
 
 from __future__ import annotations
 
-"""Lightweight wrapper around the OpenAI SDK."""
-
-
 class LLM:
     def __init__(self, model: str | None = None, temperature: float = 0.2):
         import os

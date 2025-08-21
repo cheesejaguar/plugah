@@ -33,8 +33,9 @@ jobs:
       run: |
         uv pip install --system -e ".[dev]"
     
-    - name: Run ruff check
+    - name: Run ruff (format + lint)
       run: |
+        ruff format plugah tests
         ruff check plugah tests
         ruff format --check plugah tests
     
