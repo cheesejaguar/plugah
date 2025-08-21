@@ -4,7 +4,6 @@ Tool and role-template registry with capabilities, tags, and selectors
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class ToolCategory(str, Enum):
@@ -262,7 +261,7 @@ class ToolSelector:
         return total_cost
 
 
-def get_specialization_for_domain(domain: str, role: str) -> Optional[str]:
+def get_specialization_for_domain(domain: str, role: str) -> str | None:
     """Get appropriate specialization based on domain and role"""
 
     domain_specializations = {

@@ -2,7 +2,7 @@
 Selection logic for specializations, tools, prompts, models, and staffing
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from .oag_schema import RoleLevel, ToolRef
 from .registry import TOOL_REGISTRY, ToolSelector, get_specialization_for_domain
@@ -19,9 +19,9 @@ class Selector:
     def select_specialization(
         self,
         role: str,
-        domain: Optional[str],
+        domain: str | None,
         task_description: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Select appropriate specialization for a role"""
 
         # First try domain-specific specialization
@@ -49,7 +49,7 @@ class Selector:
     def select_tools(
         self,
         role: str,
-        specialization: Optional[str],
+        specialization: str | None,
         task_description: str,
         available_budget: float
     ) -> list[ToolRef]:
@@ -91,8 +91,8 @@ class Selector:
         role: str,
         level: RoleLevel,
         project_title: str,
-        domain: Optional[str],
-        specialization: Optional[str],
+        domain: str | None,
+        specialization: str | None,
         context: dict[str, Any]
     ) -> str:
         """Compose full system prompt for an agent"""
@@ -110,7 +110,7 @@ class Selector:
         self,
         scope_size: str,
         budget: float,
-        domain: Optional[str]
+        domain: str | None
     ) -> dict[str, int]:
         """Determine how many of each role type to hire"""
 

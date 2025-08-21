@@ -7,7 +7,7 @@ import json
 import pickle
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class CacheManager:
@@ -37,7 +37,7 @@ class CacheManager:
         """Get the file path for a cache key"""
         return self.cache_dir / f"{cache_key}.cache"
 
-    def get(self, category: str, data: dict) -> Optional[Any]:
+    def get(self, category: str, data: dict) -> Any | None:
         """Retrieve cached value if it exists and is not expired"""
         cache_key = self._get_cache_key(category, data)
         cache_path = self._get_cache_path(cache_key)
@@ -82,7 +82,7 @@ class CacheManager:
             # Failed to cache, not critical
             pass
 
-    def clear(self, category: Optional[str] = None) -> int:
+    def clear(self, category: str | None = None) -> int:
         """Clear cache entries, optionally filtered by category"""
         count = 0
         for cache_file in self.cache_dir.glob("*.cache"):
@@ -126,7 +126,7 @@ class RedisCache:
             self.enabled = False
             self.fallback = CacheManager()
 
-    def get(self, category: str, data: dict) -> Optional[Any]:
+    def get(self, category: str, data: dict) -> Any | None:
         """Get from Redis or fallback to file cache"""
         if not self.enabled:
             return self.fallback.get(category, data)
@@ -142,7 +142,7 @@ class RedisCache:
 
         return None
 
-    def set(self, category: str, data: dict, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, category: str, data: dict, value: Any, ttl: int | None = None) -> None:
         """Set in Redis or fallback to file cache"""
         if not self.enabled:
             return self.fallback.set(category, data, value)
@@ -164,7 +164,7 @@ class RedisCache:
 
 
 # Global cache instance
-_cache_instance: Optional[CacheManager] = None
+_cache_instance: CacheManager | None = None
 
 
 def get_cache() -> CacheManager:

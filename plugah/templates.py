@@ -2,7 +2,6 @@
 System prompt templates for different role levels and specializations
 """
 
-from typing import Optional
 
 from jinja2 import Template
 
@@ -268,9 +267,9 @@ def compose_system_prompt(
     role: str,
     level: str,
     project_title: str,
-    domain: Optional[str] = None,
-    specialization: Optional[str] = None,
-    context: Optional[dict] = None
+    domain: str | None = None,
+    specialization: str | None = None,
+    context: dict | None = None
 ) -> str:
     """Compose a system prompt for an agent based on role and context"""
 

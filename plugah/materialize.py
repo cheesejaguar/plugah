@@ -2,7 +2,7 @@
 Converts OAG into CrewAI Agent & Task instances
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from crewai import Agent, Crew, Task
 
@@ -21,7 +21,7 @@ class Materializer:
     def materialize(
         self,
         oag: OAG,
-        llm_provider: Optional[str] = None
+        llm_provider: str | None = None
     ) -> tuple[dict[str, Agent], dict[str, Task], dict[str, Any]]:
         """
         Materialize an OAG into CrewAI agents and tasks
@@ -68,7 +68,7 @@ class Materializer:
     def _materialize_agent(
         self,
         spec: AgentSpec,
-        llm_provider: Optional[str] = None
+        llm_provider: str | None = None
     ) -> Agent:
         """Convert AgentSpec to CrewAI Agent"""
 
@@ -128,7 +128,7 @@ class Materializer:
 
         return task
 
-    def _load_tool(self, tool_id: str, args: Optional[dict] = None) -> Optional[Any]:
+    def _load_tool(self, tool_id: str, args: dict | None = None) -> Any | None:
         """Load a tool from the registry"""
 
         # Check cache

@@ -7,7 +7,7 @@ import shutil
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class EventType(str, Enum):
@@ -93,7 +93,7 @@ class AuditLogger:
             "path": str(artifact_path)
         })
 
-    def save_oag(self, oag: Any, version: Optional[int] = None):
+    def save_oag(self, oag: Any, version: int | None = None):
         """Save OAG snapshot"""
 
         filename = f"oag_v{version}" if version else "oag_current"
@@ -221,7 +221,7 @@ class AuditLogger:
 
         return "in_progress"
 
-    def export_full_log(self, output_path: Optional[str] = None):
+    def export_full_log(self, output_path: str | None = None):
         """Export full event log"""
 
         if not output_path:

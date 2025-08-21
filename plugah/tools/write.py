@@ -2,7 +2,6 @@
 Writing and documentation tool stubs
 """
 
-from typing import Optional
 
 from crewai_tools import BaseTool
 
@@ -17,7 +16,7 @@ class WriterTool(BaseTool):
         self,
         content_type: str,
         topic: str,
-        context: Optional[str] = None
+        context: str | None = None
     ) -> str:
         """Generate written content"""
 
@@ -35,7 +34,7 @@ class WriterTool(BaseTool):
         self,
         content_type: str,
         topic: str,
-        context: Optional[str] = None
+        context: str | None = None
     ) -> str:
         """Async content generation"""
         return self._run(content_type, topic, context)

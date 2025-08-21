@@ -5,7 +5,7 @@ Top orchestrator: CEO/CTO/CFO + startup discovery, patch loop
 import uuid
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from .audit import AuditLogger
 from .budget import CFO, BudgetManager
@@ -29,7 +29,7 @@ class Startup:
         self,
         problem: str,
         budget_usd: float,
-        context: Optional[dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
         Run startup discovery phase
@@ -235,19 +235,19 @@ class BoardRoom:
 
     def __init__(
         self,
-        project_id: Optional[str] = None,
-        audit_logger: Optional[AuditLogger] = None
+        project_id: str | None = None,
+        audit_logger: AuditLogger | None = None
     ):
         self.project_id = project_id or str(uuid.uuid4())
         self.audit_logger = audit_logger or AuditLogger(self.project_id)
         self.startup = Startup()
-        self.planner: Optional[Planner] = None
-        self.executor: Optional[Executor] = None
-        self.oag: Optional[OAG] = None
-        self.budget_manager: Optional[BudgetManager] = None
-        self.cfo: Optional[CFO] = None
-        self.metrics_engine: Optional[MetricsEngine] = None
-        self.patch_manager: Optional[PatchManager] = None
+        self.planner: Planner | None = None
+        self.executor: Executor | None = None
+        self.oag: OAG | None = None
+        self.budget_manager: BudgetManager | None = None
+        self.cfo: CFO | None = None
+        self.metrics_engine: MetricsEngine | None = None
+        self.patch_manager: PatchManager | None = None
         self.callbacks: list[Callable] = []
 
     def add_callback(self, callback: Callable):
@@ -266,7 +266,7 @@ class BoardRoom:
         self,
         problem: str,
         budget_usd: float,
-        context: Optional[dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Run startup discovery phase"""
 

@@ -2,7 +2,6 @@
 Data processing tool stubs
 """
 
-from typing import Optional
 
 import pandas as pd
 from crewai_tools import BaseTool
@@ -35,7 +34,7 @@ class DataTool(BaseTool):
         # Stub - would actually read CSV
         return pd.DataFrame({"column1": [1, 2, 3], "column2": ["a", "b", "c"]})
 
-    def query_sql(self, query: str, connection: Optional[str] = None) -> pd.DataFrame:
+    def query_sql(self, query: str, connection: str | None = None) -> pd.DataFrame:
         """Execute SQL query"""
         # Stub - would execute actual query
         return pd.DataFrame({"result": ["mock_data"]})

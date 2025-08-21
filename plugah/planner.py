@@ -3,7 +3,7 @@ Plans OAG from problem description and discovery answers
 """
 
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from .oag_schema import (
     KPI,
@@ -31,14 +31,14 @@ from .selector import Selector
 class Planner:
     """Plans organizational structure and task graph"""
 
-    def __init__(self, selector: Optional[Selector] = None):
+    def __init__(self, selector: Selector | None = None):
         self.selector = selector or Selector()
 
     def plan(
         self,
         prd: dict[str, Any],
         budget_usd: float,
-        context: Optional[dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ) -> OAG:
         """Create an OAG from PRD and budget"""
 

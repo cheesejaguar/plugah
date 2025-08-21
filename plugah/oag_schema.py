@@ -4,7 +4,7 @@ Organizational Agent Graph (OAG) schema definitions using Pydantic v2
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -53,7 +53,7 @@ class Reusability(str, Enum):
 class OrgMeta(BaseModel):
     project_id: str
     title: str
-    domain: Optional[str] = None
+    domain: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     version: int = 1
@@ -70,8 +70,8 @@ class KeyResult(BaseModel):
     id: str
     objective_id: str
     metric: str
-    target: Union[float, int]
-    current: Union[float, int] = 0
+    target: float | int
+    current: float | int = 0
     direction: Direction = Direction.GTE
 
 
@@ -83,8 +83,8 @@ class OKR(BaseModel):
 class KPI(BaseModel):
     id: str
     metric: str
-    target: Union[float, int]
-    current: Union[float, int] = 0
+    target: float | int
+    current: float | int = 0
     direction: Direction = Direction.GTE
     owner_agent_id: str
 
@@ -104,7 +104,7 @@ class Contract(BaseModel):
 
 class ToolRef(BaseModel):
     id: str
-    args: Optional[dict[str, Any]] = None
+    args: dict[str, Any] | None = None
 
 
 class BudgetCaps(BaseModel):
@@ -122,11 +122,11 @@ class AgentSpec(BaseModel):
     id: str
     role: str
     level: RoleLevel
-    manager_id: Optional[str] = None
-    specialization: Optional[str] = None
+    manager_id: str | None = None
+    specialization: str | None = None
     system_prompt: str = ""
     tools: list[ToolRef] = []
-    llm: Optional[str] = None
+    llm: str | None = None
     okrs: list[OKR] = []
     kpis: list[KPI] = []
     reusability: Reusability = Reusability.EXCLUSIVE
@@ -150,7 +150,7 @@ class Edge(BaseModel):
     id: str
     from_id: str
     to_id: str
-    condition: Optional[str] = None
+    condition: str | None = None
     mapping: dict[str, str] = {}
 
 
@@ -164,7 +164,7 @@ class BudgetModel(BaseModel):
 class OAG(BaseModel):
     meta: OrgMeta
     budget: BudgetModel
-    nodes: dict[str, Union[AgentSpec, TaskSpec]]
+    nodes: dict[str, AgentSpec | TaskSpec]
     edges: list[Edge] = []
 
     @field_validator('nodes')
@@ -181,10 +181,10 @@ class OAG(BaseModel):
     def get_tasks(self) -> dict[str, TaskSpec]:
         return {k: v for k, v in self.nodes.items() if isinstance(v, TaskSpec)}
 
-    def get_node(self, node_id: str) -> Optional[Union[AgentSpec, TaskSpec]]:
+    def get_node(self, node_id: str) -> AgentSpec | TaskSpec | None:
         return self.nodes.get(node_id)
 
-    def add_node(self, node: Union[AgentSpec, TaskSpec]):
+    def add_node(self, node: AgentSpec | TaskSpec):
         self.nodes[node.id] = node
 
     def add_edge(self, edge: Edge):

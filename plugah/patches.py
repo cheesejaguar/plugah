@@ -4,7 +4,7 @@ JSON-Patch helpers (RFC6902) + audit log
 
 import json
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 
 import jsonpatch
 
@@ -14,12 +14,12 @@ from .oag_schema import OAG
 class PatchManager:
     """Manage JSON patches for OAG updates"""
 
-    def __init__(self, oag: OAG, audit_logger: Optional[Any] = None):
+    def __init__(self, oag: OAG, audit_logger: Any | None = None):
         self.oag = oag
         self.audit_logger = audit_logger
         self.patch_history: list[dict[str, Any]] = []
 
-    def apply_patch(self, patch_ops: Union[dict, list[dict]]) -> bool:
+    def apply_patch(self, patch_ops: dict | list[dict]) -> bool:
         """
         Apply a JSON patch to the OAG
 
@@ -70,7 +70,7 @@ class PatchManager:
         self,
         patch_ops: list[dict],
         success: bool,
-        error: Optional[str] = None
+        error: str | None = None
     ):
         """Record a patch in history"""
 
@@ -178,7 +178,7 @@ class PatchGenerator:
     """Generate patches based on conditions"""
 
     @staticmethod
-    def generate_budget_patch(budget_alert_level: str) -> Optional[list[dict]]:
+    def generate_budget_patch(budget_alert_level: str) -> list[dict] | None:
         """Generate patch based on budget alert level"""
 
         if budget_alert_level == "emergency":

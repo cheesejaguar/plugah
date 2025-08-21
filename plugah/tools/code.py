@@ -2,7 +2,6 @@
 Code analysis tool stubs
 """
 
-from typing import Optional
 
 from crewai_tools import BaseTool
 
@@ -13,13 +12,13 @@ class RepoReaderTool(BaseTool):
     name: str = "repo_reader"
     description: str = "Read and analyze code repositories"
 
-    def _run(self, repo_path: str, file_pattern: Optional[str] = None) -> str:
+    def _run(self, repo_path: str, file_pattern: str | None = None) -> str:
         """Read repository files"""
 
         # Stub implementation
         return f"Repository at '{repo_path}' contains: [Mock file list - would read actual files]"
 
-    async def _arun(self, repo_path: str, file_pattern: Optional[str] = None) -> str:
+    async def _arun(self, repo_path: str, file_pattern: str | None = None) -> str:
         """Async repository read"""
         return self._run(repo_path, file_pattern)
 

@@ -6,7 +6,7 @@ import asyncio
 import time
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import networkx as nx
 from crewai import Crew, Task
@@ -36,7 +36,7 @@ class ExecutionResult:
         task_id: str,
         status: TaskStatus,
         output: Any = None,
-        error: Optional[str] = None,
+        error: str | None = None,
         cost: float = 0.0,
         duration: float = 0.0
     ):
@@ -54,8 +54,8 @@ class Executor:
     def __init__(
         self,
         oag: OAG,
-        budget_manager: Optional[BudgetManager] = None,
-        materializer: Optional[Materializer] = None
+        budget_manager: BudgetManager | None = None,
+        materializer: Materializer | None = None
     ):
         self.oag = oag
         self.budget_manager = budget_manager or BudgetManager(oag.budget)
@@ -63,7 +63,7 @@ class Executor:
         self.callbacks: list[Callable] = []
         self.execution_graph = None
         self.results: dict[str, ExecutionResult] = {}
-        self.crew: Optional[Crew] = None
+        self.crew: Crew | None = None
         self.use_real_execution = False  # Feature flag for real vs mock execution
         self.cache = get_cache()
 
