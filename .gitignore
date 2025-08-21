@@ -45,6 +45,14 @@ env/
 htmlcov/
 .tox/
 .hypothesis/
+coverage.xml
+.coverage.*
+*.coverage
+
+# Caches
+.mypy_cache/
+.ruff_cache/
+.cache/
 
 # Project specific
 .runs/
@@ -67,6 +75,14 @@ web/frontend/dist-ssr/
 .env
 .env.local
 .env.*.local
+.envrc
+*.env
+
+# Python/publish config
+.python-version
+.pypirc
+.pypirc.*
+pip-wheel-metadata/
 
 # Editor directories and files
 .vscode/*

@@ -13,7 +13,8 @@ from crewai import Crew, Task
 
 from .budget import BudgetManager
 from .cache import get_cache
-from .materialize import Materializer
+from .materialize import Materializer, CrewBuilder
+from .llm import LLM
 from .oag_schema import OAG, TaskSpec, TaskStatus
 
 
@@ -95,6 +96,18 @@ class Executor:
 
         # Materialize agents and tasks
         agents, tasks, id_map = self.materializer.materialize(self.oag)
+
+        # Optionally build a Crew for real execution (behind env flag)
+        try:
+            import os
+
+            if os.getenv("PLUGAH_REAL_EXECUTION", "").lower() in {"1", "true", "yes"}:
+                self.crew = CrewBuilder.build_crew(agents, tasks, self.oag)
+                self.use_real_execution = True
+        except Exception:
+            # Fallback silently to mock mode if Crew build fails
+            self.crew = None
+            self.use_real_execution = False
 
         # Check initial budget
         if not self.budget_manager.can_proceed():
@@ -217,6 +230,21 @@ class Executor:
             self.results[task_id] = result
             return
 
+        # Optional: LLM reasoning step (influences execution plan)
+        reasoning_text = None
+        try:
+            system = (
+                "You are a senior architect agent coordinating an AI organization. "
+                "Analyze the task and outline a brief step-by-step plan and any risks."
+            )
+            user = (
+                f"Task: {task_spec.description}\nExpected Output: {task_spec.expected_output}\n"
+                f"Contract DoD: {task_spec.contract.definition_of_done}"
+            )
+            reasoning_text = LLM().reason(system=system, user=user)
+        except Exception:
+            reasoning_text = None
+
         # Emit start event
         self._emit_event(
             ExecutionEvent.TASK_START,
@@ -224,6 +252,7 @@ class Executor:
                 "task_id": task_id,
                 "description": task_spec.description,
                 "agent_id": task_spec.agent_id,
+                **({"reasoning": reasoning_text} if reasoning_text else {}),
             },
         )
 
@@ -236,6 +265,11 @@ class Executor:
             # Execute task based on mode
             if self.use_real_execution and self.crew:
                 # Real CrewAI execution
+                if reasoning_text and hasattr(task, "description"):
+                    # Prepend reasoning to the task description to guide the agent
+                    task.description = (
+                        f"Pre-reasoned plan (from OpenAI):\n{reasoning_text}\n\n" + task.description
+                    )
                 output = await self._execute_with_crew(task_id, task)
                 # Estimate cost based on tokens (simplified)
                 cost = task_spec.cost.est_cost_usd * 1.1  # Add 10% for actual usage
@@ -244,7 +278,10 @@ class Executor:
                 await asyncio.sleep(0.5)  # Simulate work
                 output = {
                     "result": f"Completed {task_spec.description}",
-                    "artifacts": {"data": "sample"},
+                    "artifacts": {
+                        "data": "sample",
+                        **({"reasoning": reasoning_text} if reasoning_text else {}),
+                    },
                 }
                 cost = task_spec.cost.est_cost_usd
 

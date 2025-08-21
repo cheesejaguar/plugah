@@ -73,7 +73,8 @@ class Materializer:
         # Get LLM config from environment
         import os
 
-        llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-3.5-turbo")
+        # Prefer explicit model on spec, else env, else default to OpenAI gpt-5-nano
+        llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano")
 
         # Create agent
         agent = Agent(
@@ -160,7 +161,7 @@ class Materializer:
             goal="Complete assigned tasks",
             backstory="A diligent worker ready to tackle any task",
             tools=[],
-            llm="gpt-3.5-turbo",
+            llm=os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano"),
             max_iter=3,
             verbose=True,
         )

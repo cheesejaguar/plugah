@@ -73,9 +73,9 @@ jobs:
       run: |
         uv pip install --system -e ".[dev,demo]"
     
-    - name: Run tests with coverage
+    - name: Run tests with coverage (45% gate)
       run: |
-        pytest tests/ --cov=plugah --cov-report=xml --cov-report=term
+        pytest tests/ --cov=plugah --cov-report=xml --cov-report=term --cov-fail-under=45
     
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'

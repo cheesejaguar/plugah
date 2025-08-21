@@ -1,5 +1,11 @@
 # Plugah.ai 🧠
 
+![CI](https://github.com/cheesejaguar/plugah/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/cheesejaguar/plugah/branch/main/graph/badge.svg)](https://codecov.io/gh/cheesejaguar/plugah)
+[![PyPI version](https://img.shields.io/pypi/v/plugah.svg)](https://pypi.org/project/plugah/)
+[![Python versions](https://img.shields.io/pypi/pyversions/plugah.svg)](https://pypi.org/project/plugah/)
+[![License: MIT](https://img.shields.io/github/license/cheesejaguar/plugah.svg)](LICENSE)
+
 Multi-agent orchestration system with organizational hierarchy - dynamically generates and manages AI agent organizations to deliver projects within budget constraints.
 
 ## Overview
@@ -257,7 +263,9 @@ See the `examples/` directory for:
 
 ## Contributing
 
-We welcome contributions! Please see CONTRIBUTING.md for guidelines.
+- We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and setup.
+- Please review our [Code of Conduct](CODE_OF_CONDUCT.md).
+- Security issues? See our [Security Policy](SECURITY.md).
 
 ## License
 
@@ -274,3 +282,19 @@ Built with:
 ---
 
 **Note**: This is an experimental project exploring multi-agent orchestration patterns. The organizational hierarchy is used as a metaphor for structuring agent collaboration - the actual agents can take on any role or specialization needed for your project. These are AI agents, not real people. Actual costs depend on your LLM provider pricing.
+### LLM Configuration
+
+- Set `OPENAI_API_KEY` in your environment to enable OpenAI calls.
+- Optionally set `OPENAI_MODEL` or `DEFAULT_LLM_MODEL` to override the default model (`gpt-5-nano`).
+- The executor performs a brief "reasoning" call per task to guide execution; when using CrewAI, the reasoning is prepended to the task description to inform the agent.
+- To enable full CrewAI task execution (rather than mocked execution), set `PLUGAH_REAL_EXECUTION=1`. This builds a Crew from the materialized agents/tasks and runs them.
+
+Example:
+
+```bash
+export OPENAI_API_KEY=sk-...  # required for live LLM calls
+export OPENAI_MODEL=gpt-5-nano
+# optional: use CrewAI for full execution
+export PLUGAH_REAL_EXECUTION=1
+pytest  # or run your program
+```
