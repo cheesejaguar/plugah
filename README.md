@@ -4,7 +4,7 @@ Multi-agent orchestration system with organizational hierarchy - dynamically gen
 
 ## Overview
 
-Plugah.ai creates a virtual company of AI agents organized in a realistic hierarchy (CEO → VPs → Directors → Managers → ICs) to tackle complex projects. The system features:
+Plugah.ai creates a virtual organization of AI agents to tackle complex projects. While the system uses a business hierarchy metaphor for organization (CEO → VPs → Directors → Managers → ICs), agents can take on any role or job title needed for your specific project - from Software Engineers and Data Scientists to Game Designers, Research Analysts, Content Writers, or Domain Specialists. The system features:
 
 - **Startup Discovery Phase**: Co-founders interview you to understand requirements
 - **Dynamic Organization Planning**: Generates org structure based on project needs and budget
@@ -16,11 +16,11 @@ Plugah.ai creates a virtual company of AI agents organized in a realistic hierar
 ## Installation
 
 ```bash
-# Using uv (recommended)
-uv pip install plugah
+# Install from PyPI
+pip install plugah>=0.2
 
-# Or using pip
-pip install plugah
+# Or using uv (recommended for development)
+uv pip install plugah>=0.2
 ```
 
 ## Quick Start
@@ -35,19 +35,20 @@ plugah-demo --prompt "Build a Slack bot that summarizes conversations" --budget 
 
 ```python
 import asyncio
-from plugah import BoardRoom, Startup
+from plugah import BoardRoom, BudgetPolicy
 
 async def main():
     # Initialize the board room
-    boardroom = BoardRoom()
+    br = BoardRoom()
     
-    # Run startup discovery
-    discovery = await boardroom.startup_phase(
+    # Phase 1: Generate discovery questions
+    questions = await br.startup_phase(
         problem="Build a Slack summarizer bot",
-        budget_usd=100.0
+        budget_usd=100.0,
+        policy=BudgetPolicy.BALANCED
     )
     
-    # Answer discovery questions
+    # Phase 2: Process answers into PRD
     answers = [
         "Developers and data scientists",
         "Accurate summaries, Fast processing, Easy integration",
@@ -55,19 +56,49 @@ async def main():
         "2 weeks",
         "Slack API"
     ]
+    prd = await br.process_discovery(
+        answers=answers,
+        problem="Build a Slack summarizer bot",
+        budget_usd=100.0
+    )
     
-    # Generate PRD
-    prd = await boardroom.process_discovery(answers, problem, budget_usd)
+    # Phase 3: Plan organization structure
+    oag = await br.plan_organization(
+        prd=prd,
+        budget_usd=100.0,
+        policy=BudgetPolicy.BALANCED
+    )
     
-    # Plan organization
-    oag = await boardroom.plan_organization(prd, budget_usd)
+    # Phase 4: Execute the plan
+    result = await br.execute()
     
-    # Execute
-    results = await boardroom.execute()
-    
-    print(f"Project complete! Total cost: ${results['total_cost']}")
+    print(f"Project complete! Total cost: ${result.total_cost}")
+    print(f"Artifacts: {result.artifacts}")
+    print(f"Metrics: {result.metrics}")
 
 asyncio.run(main())
+```
+
+### State Persistence
+
+```python
+# Save state between phases
+br = BoardRoom()
+questions = await br.startup_phase(problem, budget)
+br.save_state("project_state.json")
+
+# Later, restore and continue
+br2 = BoardRoom()
+br2.load_state("project_state.json")
+prd = await br2.process_discovery(answers, problem, budget)
+```
+
+### Mock Mode for CI/Testing
+
+```bash
+# Enable mock mode (no API calls, deterministic outputs)
+export PLUGAH_MODE=mock
+python your_script.py
 ```
 
 ## Web Interface
@@ -96,19 +127,28 @@ Visit http://localhost:5173 to:
 
 ### Organizational Agent Graph (OAG)
 
-The OAG represents your virtual company:
-- **Nodes**: Agents (employees) and Tasks (work items)
-- **Edges**: Reporting relationships and task dependencies
+The OAG represents your virtual organization:
+- **Nodes**: Agents (with dynamically assigned roles) and Tasks (work items)
+- **Edges**: Collaboration relationships and task dependencies
 - **Contracts**: Explicit input/output specifications for each task
 - **Budget Model**: Soft/hard caps with policy (conservative/balanced/aggressive)
 
-### Role Hierarchy
+The graph structure adapts to your project - a web development project might have Frontend Engineers reporting to a UI/UX Lead, while a research project could have Data Scientists collaborating with Domain Experts.
 
-- **C-Suite** (CEO, CTO, CFO): Strategic decisions, budget control
-- **VPs**: Department leadership (Engineering, Product, Data)
-- **Directors**: Team management and coordination
-- **Managers**: Sprint planning and execution
-- **ICs**: Individual contributors doing the work
+### Agent Organization
+
+The system uses a hierarchical structure as an organizational metaphor, but agents adapt to your project's needs:
+
+- **C-Suite Level**: Strategic oversight and budget control (can be CEO, Lead Architect, Principal Investigator, etc.)
+- **VP Level**: Department or domain leadership (VP Engineering, Head of Research, Creative Director, etc.)
+- **Director Level**: Team coordination (Engineering Director, QA Lead, Design Lead, etc.)
+- **Manager Level**: Task planning and delegation (Sprint Manager, Project Coordinator, etc.)
+- **IC Level**: Specialized execution (Software Engineers, Data Scientists, Writers, Designers, Analysts, or any domain-specific role)
+
+The actual roles and specializations are dynamically determined based on your project requirements. For example:
+- A game development project might spawn Game Designers, Level Artists, and Gameplay Programmers
+- A research project could create Research Scientists, Data Analysts, and Literature Review Specialists
+- A content project might generate Content Writers, SEO Specialists, and Fact Checkers
 
 ### Budget Policies
 
@@ -127,8 +167,10 @@ The OAG represents your virtual company:
 
 ```
 plugah/
+├── orchestrator.py    # Stable public API (BoardRoom)
+├── types.py           # Public types (ExecutionResult, PRD, exceptions)
 ├── oag_schema.py      # Pydantic models for the org graph
-├── boardroom.py       # Main orchestrator with C-suite
+├── boardroom.py       # Internal orchestrator with C-suite
 ├── planner.py         # Creates org structure from PRD
 ├── executor.py        # Runs tasks with budget gates
 ├── budget.py          # CFO logic and cost control
@@ -155,19 +197,54 @@ ruff check plugah
 
 ## Configuration
 
-Set budget limits and policies in your code:
+### Budget Policies
 
 ```python
-from plugah import BudgetPolicy
+from plugah import BoardRoom, BudgetPolicy
 
-# Configure budget
-budget_caps = {
-    "soft_cap_usd": 80.0,  # Warning at 70%, downgrades at 90%
-    "hard_cap_usd": 100.0  # Absolute maximum
-}
+br = BoardRoom()
 
-# Set policy
-policy = BudgetPolicy.BALANCED  # or CONSERVATIVE, AGGRESSIVE
+# Use different policies for different phases
+questions = await br.startup_phase(
+    problem="...",
+    budget_usd=100.0,
+    policy=BudgetPolicy.CONSERVATIVE  # Save money during discovery
+)
+
+oag = await br.plan_organization(
+    prd=prd,
+    budget_usd=100.0,
+    policy=BudgetPolicy.AGGRESSIVE  # Maximize resources for execution
+)
+```
+
+### Event Streaming
+
+```python
+# Get execution events
+async def handle_event(event, data):
+    print(f"Event: {event.value}, Data: {data}")
+
+result = await br.execute(on_event=handle_event)
+
+# Or iterate over events
+async for event in br.events_stream():
+    print(f"Phase: {event.phase}, Cost: ${event.acc_cost}")
+```
+
+### Exception Handling
+
+```python
+from plugah import InvalidInput, BudgetExceeded, ProviderError
+
+try:
+    result = await br.execute()
+except BudgetExceeded as e:
+    print(f"Budget exceeded: {e.details}")
+except InvalidInput as e:
+    print(f"Invalid input: {e.details}")
+except ProviderError as e:
+    print(f"Provider error: {e.details}")
 ```
 
 ## Examples
@@ -196,4 +273,4 @@ Built with:
 
 ---
 
-**Note**: This is an experimental project exploring multi-agent orchestration patterns. The virtual "employees" are AI agents, not real people. Actual costs depend on your LLM provider pricing.
+**Note**: This is an experimental project exploring multi-agent orchestration patterns. The organizational hierarchy is used as a metaphor for structuring agent collaboration - the actual agents can take on any role or specialization needed for your project. These are AI agents, not real people. Actual costs depend on your LLM provider pricing.
