@@ -4,6 +4,19 @@ Thank you for your interest in contributing to Plugah! We welcome contributions 
 
 For a concise contributor overview (structure, commands, style), see the repository guide in [AGENTS.md](AGENTS.md).
 
+## Agent‑Ready Prompts for Issues
+
+When opening issues, please include an agent‑ready prompt (Claude Code/Cursor/Codex) so an AI dev agent can implement or fix quickly:
+
+- Feature requests: use the required “Claude Code Prompt” field in the template.
+- Change requests: include the detailed agent prompt section.
+- Bug reports: optional agent prompt to reproduce and fix with a failing test, minimal patch, and PR.
+
+Quick links to templates:
+- Feature Request: .github/ISSUE_TEMPLATE/feature_request.yml
+- Change Request: .github/ISSUE_TEMPLATE/change_request.yml
+- Bug Report: .github/ISSUE_TEMPLATE/bug_report.yml
+
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
