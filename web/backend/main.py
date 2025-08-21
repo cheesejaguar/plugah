@@ -41,7 +41,8 @@ app.include_router(status_router, prefix="/status", tags=["status"])
 # Serve static files if they exist
 static_path = Path(__file__).parent.parent / "frontend" / "dist"
 if static_path.exists():
-    app.mount("/", StaticFiles(directory=str(static_path), html=True), name="static")
+    # Mount UI under /app to avoid shadowing API routes like /health
+    app.mount("/app", StaticFiles(directory=str(static_path), html=True), name="static")
 
 
 @app.get("/health")
