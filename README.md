@@ -85,6 +85,22 @@ async def main():
 asyncio.run(main())
 ```
 
+### ReOrg (Update PRD and Replan)
+
+```python
+from plugah import BoardRoom, PRD
+
+br = BoardRoom()
+# ... run discovery and planning first ...
+updated = PRD({
+    "title": "New Direction",
+    "problem_statement": "Updated scope",
+    "budget": 150.0,
+    "objectives": [],
+})
+br.reorg(updated)  # rewrites PRD.md + team PRDs and replans the OAG
+```
+
 ### State Persistence
 
 ```python
@@ -140,6 +156,14 @@ The OAG represents your virtual organization:
 - **Budget Model**: Soft/hard caps with policy (conservative/balanced/aggressive)
 
 The graph structure adapts to your project - a web development project might have Frontend Engineers reporting to a UI/UX Lead, while a research project could have Data Scientists collaborating with Domain Experts.
+
+### PRD Artifacts
+
+Plugah writes human-readable PRD documents to keep agents aligned:
+- Root PRD: `.runs/<project_id>/PRD.md` (overview, objectives, plus OKR/KPI roll-up tables after planning)
+- Team PRDs: `.runs/<project_id>/teams/<agent_id>/PRD.md` (inherits parent PRD, links back via `../../PRD.md`, and lists team OKRs/KPIs and roll-ups)
+
+The Board Room can “ReOrg” at any time: update the PRD, re-plan, and rewrite PRD docs.
 
 ### Agent Organization
 
@@ -199,6 +223,10 @@ mypy plugah
 
 # Linting
 ruff check plugah
+
+# Pre-commit hooks (mirror CI):
+pre-commit install
+pre-commit run --all-files
 ```
 
 ## Configuration
@@ -267,6 +295,7 @@ See the `examples/` directory for:
 - Please review our [Code of Conduct](CODE_OF_CONDUCT.md).
 - Security issues? See our [Security Policy](SECURITY.md).
 - For a concise contributor quickstart, read [AGENTS.md](AGENTS.md).
+ - When opening issues, include an agent-ready prompt (Cursor/Claude Code/Codex); templates are provided.
 
 ## License
 
@@ -287,15 +316,15 @@ Built with:
 
 - Set `OPENAI_API_KEY` in your environment to enable OpenAI calls.
 - Optionally set `OPENAI_MODEL` or `DEFAULT_LLM_MODEL` to override the default model (`gpt-5-nano`).
-- The executor performs a brief "reasoning" call per task to guide execution; when using CrewAI, the reasoning is prepended to the task description to inform the agent.
-- To enable full CrewAI task execution (rather than mocked execution), set `PLUGAH_REAL_EXECUTION=1`. This builds a Crew from the materialized agents/tasks and runs them.
+ - The executor performs a brief "reasoning" call per task to guide execution; when using CrewAI, the reasoning is prepended to the task description to inform the agent.
+ - CrewAI execution is enabled by default. To force mock execution only, set `PLUGAH_REAL_EXECUTION=0` (or `false`/`no`).
 
 Example:
 
 ```bash
 export OPENAI_API_KEY=sk-...  # required for live LLM calls
 export OPENAI_MODEL=gpt-5-nano
-# optional: use CrewAI for full execution
-export PLUGAH_REAL_EXECUTION=1
+# optional: disable CrewAI and force mock execution
+export PLUGAH_REAL_EXECUTION=0
 pytest  # or run your program
 ```
