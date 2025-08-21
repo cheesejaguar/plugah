@@ -2,7 +2,6 @@
 System prompt templates for different role levels and specializations
 """
 
-
 from jinja2 import Template
 
 ROLE_TEMPLATES = {
@@ -35,7 +34,6 @@ OKRs you own:
 
 Definition of Done: {{ definition_of_done }}
 """),
-
     "CTO": Template("""
 You are the CTO of {{ project_title }}.
 Domain: {{ domain }}
@@ -70,7 +68,6 @@ OKRs you own:
 
 Definition of Done: {{ definition_of_done }}
 """),
-
     "CFO": Template("""
 You are the CFO of {{ project_title }}.
 Your primary responsibility is budget management and cost control.
@@ -101,7 +98,6 @@ KPIs you track:
 - Cost per deliverable
 - ROI metrics
 """),
-
     "VP": Template("""
 You are the {{ specialization }} of {{ project_title }}.
 Reporting to: {{ manager_role }}
@@ -134,7 +130,6 @@ KPIs you track:
 - {{ kpi.metric }}: Target {{ kpi.target }}
 {% endfor %}
 """),
-
     "DIRECTOR": Template("""
 You are the {{ specialization }} of {{ project_title }}.
 Reporting to: {{ manager_role }}
@@ -165,7 +160,6 @@ KPIs you own:
 
 Definition of Done: {{ definition_of_done }}
 """),
-
     "MANAGER": Template("""
 You are the {{ specialization }} of {{ project_title }}.
 Reporting to: {{ manager_role }}
@@ -192,7 +186,6 @@ Sprint Deliverables:
 
 Definition of Done: {{ definition_of_done }}
 """),
-
     "IC": Template("""
 You are a {{ specialization }} working on {{ project_title }}.
 Reporting to: {{ manager_role }}
@@ -230,32 +223,26 @@ SPECIALIZATION_TEMPLATES = {
 You specialize in product discovery and user research.
 Your focus is understanding user needs, market fit, and success criteria.
 """),
-
     "Tech Architect": Template("""
 You specialize in system design and technical architecture.
 Your focus is on scalability, reliability, and technical feasibility.
 """),
-
     "Data Engineer": Template("""
 You specialize in data pipelines and analytics infrastructure.
 Your focus is on data quality, processing efficiency, and insights delivery.
 """),
-
     "Frontend Engineer": Template("""
 You specialize in user interface and experience implementation.
 Your focus is on responsive design, performance, and accessibility.
 """),
-
     "Backend Engineer": Template("""
 You specialize in server-side logic and API development.
 Your focus is on reliability, security, and performance.
 """),
-
     "QA Engineer": Template("""
 You specialize in quality assurance and testing.
 Your focus is on test coverage, bug detection, and quality metrics.
 """),
-
     "DevOps Engineer": Template("""
 You specialize in deployment, monitoring, and infrastructure.
 Your focus is on CI/CD, observability, and system reliability.
@@ -269,7 +256,7 @@ def compose_system_prompt(
     project_title: str,
     domain: str | None = None,
     specialization: str | None = None,
-    context: dict | None = None
+    context: dict | None = None,
 ) -> str:
     """Compose a system prompt for an agent based on role and context"""
 
@@ -291,7 +278,7 @@ def compose_system_prompt(
         project_title=project_title,
         domain=domain or "general",
         specialization=specialization or role,
-        **context
+        **context,
     )
 
     return prompt

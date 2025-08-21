@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Target, TrendingUp, Award, AlertTriangle } from 'lucide-react'
+import { Target, Award, AlertTriangle } from 'lucide-react'
 
 interface OKRPanelProps {
   sessionId: string

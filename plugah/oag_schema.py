@@ -167,7 +167,7 @@ class OAG(BaseModel):
     nodes: dict[str, AgentSpec | TaskSpec]
     edges: list[Edge] = []
 
-    @field_validator('nodes')
+    @field_validator("nodes")
     @classmethod
     def validate_node_types(cls, v):
         for node_id, node in v.items():

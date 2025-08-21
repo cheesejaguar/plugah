@@ -1,0 +1,19 @@
+# Example PyPI configuration file
+# Copy this to ~/.pypirc and update with your credentials
+# For GitHub Actions, use trusted publishing instead of this file
+
+[distutils]
+index-servers =
+    pypi
+    testpypi
+
+[pypi]
+# For token authentication (recommended)
+username = __token__
+password = pypi-YOUR_TOKEN_HERE
+
+[testpypi]
+# For Test PyPI
+repository = https://test.pypi.org/legacy/
+username = __token__
+password = pypi-YOUR_TEST_TOKEN_HERE

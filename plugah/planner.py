@@ -35,10 +35,7 @@ class Planner:
         self.selector = selector or Selector()
 
     def plan(
-        self,
-        prd: dict[str, Any],
-        budget_usd: float,
-        context: dict[str, Any] | None = None
+        self, prd: dict[str, Any], budget_usd: float, context: dict[str, Any] | None = None
     ) -> OAG:
         """Create an OAG from PRD and budget"""
 
@@ -49,51 +46,39 @@ class Planner:
         project_title = prd.get("title", "Project")
         domain = prd.get("domain", "general")
         objectives = prd.get("objectives", [])
-        constraints = prd.get("constraints", [])
+        # constraints = prd.get("constraints", [])  # For future use
         success_criteria = prd.get("success_criteria", [])
 
         # Determine budget policy
         policy = self._determine_budget_policy(budget_usd, len(objectives))
 
         # Create metadata
-        meta = OrgMeta(
-            project_id=project_id,
-            title=project_title,
-            domain=domain
-        )
+        meta = OrgMeta(project_id=project_id, title=project_title, domain=domain)
 
         # Create budget model
         budget = BudgetModel(
-            caps=BudgetCaps(
-                soft_cap_usd=budget_usd * 0.8,
-                hard_cap_usd=budget_usd
-            ),
+            caps=BudgetCaps(soft_cap_usd=budget_usd * 0.8, hard_cap_usd=budget_usd),
             policy=policy,
-            forecast_cost_usd=0.0
+            forecast_cost_usd=0.0,
         )
 
         # Initialize OAG
-        oag = OAG(
-            meta=meta,
-            budget=budget,
-            nodes={},
-            edges=[]
-        )
+        oag = OAG(meta=meta, budget=budget, nodes={}, edges=[])
 
         # Create Board Room
         self._create_board_room(oag, project_title, domain, objectives)
 
         # Determine staffing
         staffing = self.selector.determine_staffing_level(
-            scope_size=self._estimate_scope_size(objectives),
-            budget=budget_usd,
-            domain=domain
+            scope_size=self._estimate_scope_size(objectives), budget=budget_usd, domain=domain
         )
 
         # Create organizational hierarchy
         vps = self._create_vps(oag, project_title, domain, staffing["vps"])
         directors = self._create_directors(oag, project_title, domain, vps, staffing["directors"])
-        managers = self._create_managers(oag, project_title, domain, directors, staffing["managers"])
+        managers = self._create_managers(
+            oag, project_title, domain, directors, staffing["managers"]
+        )
         ics = self._create_ics(oag, project_title, domain, managers, staffing["ics"])
 
         # Create tasks based on objectives
@@ -128,13 +113,7 @@ class Planner:
         else:
             return "large"
 
-    def _create_board_room(
-        self,
-        oag: OAG,
-        project_title: str,
-        domain: str,
-        objectives: list[dict]
-    ):
+    def _create_board_room(self, oag: OAG, project_title: str, domain: str, objectives: list[dict]):
         """Create C-Suite executives"""
 
         # CEO
@@ -151,16 +130,16 @@ class Planner:
                 project_title=project_title,
                 domain=domain,
                 specialization=None,
-                context={"objectives": objectives}
+                context={"objectives": objectives},
             ),
             tools=self.selector.select_tools(
                 role="CEO",
                 specialization=None,
                 task_description="Strategic oversight",
-                available_budget=oag.budget.caps.hard_cap_usd
+                available_budget=oag.budget.caps.hard_cap_usd,
             ),
             llm=self.selector.select_model(RoleLevel.C_SUITE),
-            okrs=ceo_okrs
+            okrs=ceo_okrs,
         )
         oag.add_node(ceo)
 
@@ -178,16 +157,16 @@ class Planner:
                 project_title=project_title,
                 domain=domain,
                 specialization=None,
-                context={"objectives": objectives}
+                context={"objectives": objectives},
             ),
             tools=self.selector.select_tools(
                 role="CTO",
                 specialization=None,
                 task_description="Technical strategy",
-                available_budget=oag.budget.caps.hard_cap_usd
+                available_budget=oag.budget.caps.hard_cap_usd,
             ),
             llm=self.selector.select_model(RoleLevel.C_SUITE),
-            okrs=cto_okrs
+            okrs=cto_okrs,
         )
         oag.add_node(cto)
 
@@ -199,15 +178,15 @@ class Planner:
                 metric="Burn Rate",
                 target=oag.budget.caps.soft_cap_usd / 10,
                 direction=Direction.LTE,
-                owner_agent_id=cfo_id
+                owner_agent_id=cfo_id,
             ),
             KPI(
                 id="kpi_cost_efficiency",
                 metric="Cost per Deliverable",
                 target=oag.budget.caps.hard_cap_usd / max(len(objectives), 1),
                 direction=Direction.LTE,
-                owner_agent_id=cfo_id
-            )
+                owner_agent_id=cfo_id,
+            ),
         ]
 
         cfo = AgentSpec(
@@ -222,27 +201,21 @@ class Planner:
                 specialization=None,
                 context={
                     "budget_soft_cap": oag.budget.caps.soft_cap_usd,
-                    "budget_hard_cap": oag.budget.caps.hard_cap_usd
-                }
+                    "budget_hard_cap": oag.budget.caps.hard_cap_usd,
+                },
             ),
             tools=self.selector.select_tools(
                 role="CFO",
                 specialization=None,
                 task_description="Budget management",
-                available_budget=oag.budget.caps.hard_cap_usd
+                available_budget=oag.budget.caps.hard_cap_usd,
             ),
             llm=self.selector.select_model(RoleLevel.C_SUITE),
-            kpis=cfo_kpis
+            kpis=cfo_kpis,
         )
         oag.add_node(cfo)
 
-    def _create_vps(
-        self,
-        oag: OAG,
-        project_title: str,
-        domain: str,
-        count: int
-    ) -> list[str]:
+    def _create_vps(self, oag: OAG, project_title: str, domain: str, count: int) -> list[str]:
         """Create VP-level positions"""
 
         vp_roles = ["VP Engineering", "VP Product", "VP Data"][:count]
@@ -263,15 +236,15 @@ class Planner:
                     project_title=project_title,
                     domain=domain,
                     specialization=None,
-                    context={}
+                    context={},
                 ),
                 tools=self.selector.select_tools(
                     role=role,
                     specialization=None,
                     task_description="Department leadership",
-                    available_budget=oag.budget.caps.hard_cap_usd * 0.3
+                    available_budget=oag.budget.caps.hard_cap_usd * 0.3,
                 ),
-                llm=self.selector.select_model(RoleLevel.VP)
+                llm=self.selector.select_model(RoleLevel.VP),
             )
             oag.add_node(vp)
             vp_ids.append(vp_id)
@@ -279,12 +252,7 @@ class Planner:
         return vp_ids
 
     def _create_directors(
-        self,
-        oag: OAG,
-        project_title: str,
-        domain: str,
-        vp_ids: list[str],
-        count: int
+        self, oag: OAG, project_title: str, domain: str, vp_ids: list[str], count: int
     ) -> list[str]:
         """Create Director-level positions"""
 
@@ -297,7 +265,7 @@ class Planner:
 
                 director = AgentSpec(
                     id=dir_id,
-                    role=f"Director {i+1}",
+                    role=f"Director {i + 1}",
                     level=RoleLevel.DIRECTOR,
                     manager_id=vp_id,
                     system_prompt=self.selector.compose_system_prompt(
@@ -306,15 +274,15 @@ class Planner:
                         project_title=project_title,
                         domain=domain,
                         specialization=None,
-                        context={}
+                        context={},
                     ),
                     tools=self.selector.select_tools(
                         role="Director",
                         specialization=None,
                         task_description="Team management",
-                        available_budget=oag.budget.caps.hard_cap_usd * 0.1
+                        available_budget=oag.budget.caps.hard_cap_usd * 0.1,
                     ),
-                    llm=self.selector.select_model(RoleLevel.DIRECTOR)
+                    llm=self.selector.select_model(RoleLevel.DIRECTOR),
                 )
                 oag.add_node(director)
                 director_ids.append(dir_id)
@@ -322,12 +290,7 @@ class Planner:
         return director_ids
 
     def _create_managers(
-        self,
-        oag: OAG,
-        project_title: str,
-        domain: str,
-        director_ids: list[str],
-        count: int
+        self, oag: OAG, project_title: str, domain: str, director_ids: list[str], count: int
     ) -> list[str]:
         """Create Manager-level positions"""
 
@@ -340,7 +303,7 @@ class Planner:
 
                 manager = AgentSpec(
                     id=mgr_id,
-                    role=f"Manager {i+1}",
+                    role=f"Manager {i + 1}",
                     level=RoleLevel.MANAGER,
                     manager_id=dir_id,
                     system_prompt=self.selector.compose_system_prompt(
@@ -349,15 +312,15 @@ class Planner:
                         project_title=project_title,
                         domain=domain,
                         specialization=None,
-                        context={}
+                        context={},
                     ),
                     tools=self.selector.select_tools(
                         role="Manager",
                         specialization=None,
                         task_description="Sprint management",
-                        available_budget=oag.budget.caps.hard_cap_usd * 0.05
+                        available_budget=oag.budget.caps.hard_cap_usd * 0.05,
                     ),
-                    llm=self.selector.select_model(RoleLevel.MANAGER)
+                    llm=self.selector.select_model(RoleLevel.MANAGER),
                 )
                 oag.add_node(manager)
                 manager_ids.append(mgr_id)
@@ -365,12 +328,7 @@ class Planner:
         return manager_ids
 
     def _create_ics(
-        self,
-        oag: OAG,
-        project_title: str,
-        domain: str,
-        manager_ids: list[str],
-        count: int
+        self, oag: OAG, project_title: str, domain: str, manager_ids: list[str], count: int
     ) -> list[str]:
         """Create Individual Contributor positions"""
 
@@ -398,15 +356,15 @@ class Planner:
                         project_title=project_title,
                         domain=domain,
                         specialization=specialization,
-                        context={}
+                        context={},
                     ),
                     tools=self.selector.select_tools(
                         role=role,
                         specialization=specialization,
                         task_description="Implementation",
-                        available_budget=oag.budget.caps.hard_cap_usd * 0.02
+                        available_budget=oag.budget.caps.hard_cap_usd * 0.02,
                     ),
-                    llm=self.selector.select_model(RoleLevel.IC)
+                    llm=self.selector.select_model(RoleLevel.IC),
                 )
                 oag.add_node(ic)
                 ic_ids.append(ic_id)
@@ -414,11 +372,7 @@ class Planner:
         return ic_ids
 
     def _create_tasks(
-        self,
-        oag: OAG,
-        objectives: list[dict],
-        success_criteria: list[str],
-        ic_ids: list[str]
+        self, oag: OAG, objectives: list[dict], success_criteria: list[str], ic_ids: list[str]
     ) -> list[str]:
         """Create tasks from objectives"""
 
@@ -431,7 +385,7 @@ class Planner:
             ("MVP Implementation", "Build minimum viable product", ["mvp_code"]),
             ("Testing", "Test and validate implementation", ["test_results"]),
             ("Documentation", "Create user and technical documentation", ["documentation"]),
-            ("Deployment", "Deploy to production", ["deployment_status"])
+            ("Deployment", "Deploy to production", ["deployment_status"]),
         ]
 
         for i, (task_name, description, outputs) in enumerate(standard_tasks):
@@ -445,7 +399,7 @@ class Planner:
                         name="requirements",
                         dtype="string",
                         description="Project requirements",
-                        required=True
+                        required=True,
                     )
                 ],
                 outputs=[
@@ -453,10 +407,11 @@ class Planner:
                         name=output,
                         dtype="string",
                         description=f"{task_name} output",
-                        required=True
-                    ) for output in outputs
+                        required=True,
+                    )
+                    for output in outputs
                 ],
-                definition_of_done=f"{task_name} completed and validated"
+                definition_of_done=f"{task_name} completed and validated",
             )
 
             task = TaskSpec(
@@ -466,7 +421,7 @@ class Planner:
                 contract=contract,
                 expected_output=f"Completed {task_name.lower()}",
                 status=TaskStatus.PLANNED,
-                cost=CostTrack(est_cost_usd=self.selector.estimate_role_cost(RoleLevel.IC))
+                cost=CostTrack(est_cost_usd=self.selector.estimate_role_cost(RoleLevel.IC)),
             )
 
             oag.add_node(task)
@@ -483,7 +438,7 @@ class Planner:
                 id=f"edge_{i}",
                 from_id=task_ids[i],
                 to_id=task_ids[i + 1],
-                mapping={"output": "input"}
+                mapping={"output": "input"},
             )
             oag.add_edge(edge)
 
@@ -497,7 +452,7 @@ class Planner:
                 id="obj_user_value",
                 title="Deliver User Value",
                 description="Ensure project delivers value to users",
-                owner_agent_id="agent_ceo"
+                owner_agent_id="agent_ceo",
             )
 
             krs = [
@@ -506,15 +461,15 @@ class Planner:
                     objective_id="obj_user_value",
                     metric="Project Completion",
                     target=100,
-                    direction=Direction.GTE
+                    direction=Direction.GTE,
                 ),
                 KeyResult(
                     id="kr_quality",
                     objective_id="obj_user_value",
                     metric="Quality Score",
                     target=90,
-                    direction=Direction.GTE
-                )
+                    direction=Direction.GTE,
+                ),
             ]
 
             okrs.append(OKR(objective=obj, key_results=krs))
@@ -524,7 +479,7 @@ class Planner:
                 id="obj_tech_excellence",
                 title="Technical Excellence",
                 description="Ensure technical quality and architecture",
-                owner_agent_id="agent_cto"
+                owner_agent_id="agent_cto",
             )
 
             krs = [
@@ -533,7 +488,7 @@ class Planner:
                     objective_id="obj_tech_excellence",
                     metric="Architecture Score",
                     target=95,
-                    direction=Direction.GTE
+                    direction=Direction.GTE,
                 )
             ]
 
@@ -548,7 +503,9 @@ class Planner:
 
         # Sum up agent costs (estimated per interaction)
         for agent in oag.get_agents().values():
-            total_cost += self.selector.estimate_role_cost(agent.level) * 10  # Assume 10 interactions
+            total_cost += (
+                self.selector.estimate_role_cost(agent.level) * 10
+            )  # Assume 10 interactions
 
         # Sum up task costs
         for task in oag.get_tasks().values():

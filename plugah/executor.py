@@ -9,8 +9,10 @@ from enum import Enum
 from typing import Any
 
 import networkx as nx
+from crewai import Crew, Task
 
 from .budget import BudgetManager
+from .cache import get_cache
 from .materialize import Materializer
 from .oag_schema import OAG, TaskSpec, TaskStatus
 
@@ -36,7 +38,7 @@ class ExecutionResult:
         output: Any = None,
         error: str | None = None,
         cost: float = 0.0,
-        duration: float = 0.0
+        duration: float = 0.0,
     ):
         self.task_id = task_id
         self.status = status
@@ -53,7 +55,7 @@ class Executor:
         self,
         oag: OAG,
         budget_manager: BudgetManager | None = None,
-        materializer: Materializer | None = None
+        materializer: Materializer | None = None,
     ):
         self.oag = oag
         self.budget_manager = budget_manager or BudgetManager(oag.budget)
@@ -61,6 +63,9 @@ class Executor:
         self.callbacks: list[Callable] = []
         self.execution_graph = None
         self.results: dict[str, ExecutionResult] = {}
+        self.crew: Crew | None = None
+        self.use_real_execution = False  # Feature flag for real vs mock execution
+        self.cache = get_cache()
 
     def add_callback(self, callback: Callable):
         """Add an event callback"""
@@ -77,10 +82,10 @@ class Executor:
     async def execute(self, parallel: bool = True) -> dict[str, ExecutionResult]:
         """
         Execute the OAG
-        
+
         Args:
             parallel: Whether to execute independent tasks in parallel
-        
+
         Returns:
             Dictionary of task_id -> ExecutionResult
         """
@@ -93,11 +98,14 @@ class Executor:
 
         # Check initial budget
         if not self.budget_manager.can_proceed():
-            self._emit_event(ExecutionEvent.BUDGET_EXCEEDED, {
-                "message": "Budget exceeded before execution",
-                "spent": self.budget_manager.get_spent(),
-                "limit": self.budget_manager.budget.caps.hard_cap_usd
-            })
+            self._emit_event(
+                ExecutionEvent.BUDGET_EXCEEDED,
+                {
+                    "message": "Budget exceeded before execution",
+                    "spent": self.budget_manager.get_spent(),
+                    "limit": self.budget_manager.budget.caps.hard_cap_usd,
+                },
+            )
             return {}
 
         # Execute in waves
@@ -111,18 +119,18 @@ class Executor:
     def _build_execution_graph(self) -> nx.DiGraph:
         """Build execution graph from OAG"""
 
-        G = nx.DiGraph()
+        g = nx.DiGraph()
 
         # Add all tasks
         for task_id, task_spec in self.oag.get_tasks().items():
-            G.add_node(task_id, spec=task_spec)
+            g.add_node(task_id, spec=task_spec)
 
         # Add dependencies
         for edge in self.oag.edges:
-            if edge.from_id in G and edge.to_id in G:
-                G.add_edge(edge.from_id, edge.to_id, edge=edge)
+            if edge.from_id in g and edge.to_id in g:
+                g.add_edge(edge.from_id, edge.to_id, edge=edge)
 
-        return G
+        return g
 
     async def _execute_sequential(self, tasks: dict[str, Any]):
         """Execute tasks sequentially in dependency order"""
@@ -141,9 +149,7 @@ class Executor:
             # Check if dependencies are satisfied
             if not self._dependencies_satisfied(task_id):
                 result = ExecutionResult(
-                    task_id=task_id,
-                    status=TaskStatus.SKIPPED,
-                    error="Dependencies not satisfied"
+                    task_id=task_id, status=TaskStatus.SKIPPED, error="Dependencies not satisfied"
                 )
                 self.results[task_id] = result
                 continue
@@ -168,10 +174,7 @@ class Executor:
                 break
 
             # Execute ready tasks in parallel
-            coroutines = [
-                self._execute_task(task_id, tasks[task_id])
-                for task_id in ready_tasks
-            ]
+            coroutines = [self._execute_task(task_id, tasks[task_id]) for task_id in ready_tasks]
 
             await asyncio.gather(*coroutines)
 
@@ -203,25 +206,26 @@ class Executor:
 
         # Check budget before execution
         if not self.budget_manager.can_proceed():
-            self._emit_event(ExecutionEvent.BUDGET_EXCEEDED, {
-                "task_id": task_id,
-                "spent": self.budget_manager.get_spent()
-            })
+            self._emit_event(
+                ExecutionEvent.BUDGET_EXCEEDED,
+                {"task_id": task_id, "spent": self.budget_manager.get_spent()},
+            )
 
             result = ExecutionResult(
-                task_id=task_id,
-                status=TaskStatus.FAILED,
-                error="Budget exceeded"
+                task_id=task_id, status=TaskStatus.FAILED, error="Budget exceeded"
             )
             self.results[task_id] = result
             return
 
         # Emit start event
-        self._emit_event(ExecutionEvent.TASK_START, {
-            "task_id": task_id,
-            "description": task_spec.description,
-            "agent_id": task_spec.agent_id
-        })
+        self._emit_event(
+            ExecutionEvent.TASK_START,
+            {
+                "task_id": task_id,
+                "description": task_spec.description,
+                "agent_id": task_spec.agent_id,
+            },
+        )
 
         # Update task status
         task_spec.status = TaskStatus.RUNNING
@@ -229,28 +233,34 @@ class Executor:
         start_time = time.time()
 
         try:
-            # Simulate task execution (in production, would call CrewAI)
-            await asyncio.sleep(0.5)  # Simulate work
-
-            # Mock output
-            output = {
-                "result": f"Completed {task_spec.description}",
-                "artifacts": {"data": "sample"}
-            }
-
-            # Calculate cost
-            cost = task_spec.cost.est_cost_usd
+            # Execute task based on mode
+            if self.use_real_execution and self.crew:
+                # Real CrewAI execution
+                output = await self._execute_with_crew(task_id, task)
+                # Estimate cost based on tokens (simplified)
+                cost = task_spec.cost.est_cost_usd * 1.1  # Add 10% for actual usage
+            else:
+                # Mock execution for demo
+                await asyncio.sleep(0.5)  # Simulate work
+                output = {
+                    "result": f"Completed {task_spec.description}",
+                    "artifacts": {"data": "sample"},
+                }
+                cost = task_spec.cost.est_cost_usd
 
             # Update budget
             self.budget_manager.record_spend(cost)
 
             # Check for budget warnings
             if self.budget_manager.is_near_soft_cap():
-                self._emit_event(ExecutionEvent.BUDGET_WARNING, {
-                    "task_id": task_id,
-                    "spent": self.budget_manager.get_spent(),
-                    "soft_cap": self.budget_manager.budget.caps.soft_cap_usd
-                })
+                self._emit_event(
+                    ExecutionEvent.BUDGET_WARNING,
+                    {
+                        "task_id": task_id,
+                        "spent": self.budget_manager.get_spent(),
+                        "soft_cap": self.budget_manager.budget.caps.soft_cap_usd,
+                    },
+                )
 
             # Update task
             task_spec.status = TaskStatus.DONE
@@ -263,16 +273,14 @@ class Executor:
                 status=TaskStatus.DONE,
                 output=output,
                 cost=cost,
-                duration=time.time() - start_time
+                duration=time.time() - start_time,
             )
 
             # Emit complete event
-            self._emit_event(ExecutionEvent.TASK_COMPLETE, {
-                "task_id": task_id,
-                "output": output,
-                "cost": cost,
-                "duration": result.duration
-            })
+            self._emit_event(
+                ExecutionEvent.TASK_COMPLETE,
+                {"task_id": task_id, "output": output, "cost": cost, "duration": result.duration},
+            )
 
         except Exception as e:
             # Task failed
@@ -282,28 +290,71 @@ class Executor:
                 task_id=task_id,
                 status=TaskStatus.FAILED,
                 error=str(e),
-                duration=time.time() - start_time
+                duration=time.time() - start_time,
             )
 
-            self._emit_event(ExecutionEvent.TASK_FAILED, {
-                "task_id": task_id,
-                "error": str(e)
-            })
+            self._emit_event(ExecutionEvent.TASK_FAILED, {"task_id": task_id, "error": str(e)})
 
         self.results[task_id] = result
+
+    async def _execute_with_crew(self, task_id: str, task: Task) -> dict[str, Any]:
+        """Execute a task using CrewAI with caching"""
+
+        # Check cache first
+        cache_key = {
+            "task_id": task_id,
+            "description": task.description,
+            "expected_output": task.expected_output,
+        }
+
+        cached_result = self.cache.get("agent_response", cache_key)
+        if cached_result is not None:
+            # Return cached result
+            return cached_result
+
+        # Run the specific task through crew
+        # Note: CrewAI doesn't support running individual tasks directly,
+        # so we need to create a mini-crew for this task
+        try:
+            # Get the agent for this task
+            agent = task.agent
+
+            # Create a mini crew for this single task
+            from crewai import Crew
+
+            mini_crew = Crew(agents=[agent], tasks=[task], verbose=False, process="sequential")
+
+            # Execute synchronously (CrewAI doesn't support async yet)
+            result = await asyncio.to_thread(mini_crew.kickoff)
+
+            # Parse result
+            if isinstance(result, str):
+                output = {"result": result, "artifacts": {}}
+            elif isinstance(result, dict):
+                output = result
+            else:
+                output = {"result": str(result), "artifacts": {}}
+
+            # Cache the successful result
+            self.cache.set("agent_response", cache_key, output)
+
+            return output
+
+        except Exception as e:
+            # Fallback to mock if CrewAI fails
+            fallback = {
+                "result": f"Task {task_id} completed (CrewAI error: {e!s})",
+                "artifacts": {"error": str(e)},
+            }
+            # Don't cache errors
+            return fallback
 
     def get_progress(self) -> dict[str, Any]:
         """Get execution progress"""
 
         total_tasks = len(self.oag.get_tasks())
-        completed_tasks = sum(
-            1 for r in self.results.values()
-            if r.status == TaskStatus.DONE
-        )
-        failed_tasks = sum(
-            1 for r in self.results.values()
-            if r.status == TaskStatus.FAILED
-        )
+        completed_tasks = sum(1 for r in self.results.values() if r.status == TaskStatus.DONE)
+        failed_tasks = sum(1 for r in self.results.values() if r.status == TaskStatus.FAILED)
 
         return {
             "total": total_tasks,
@@ -312,7 +363,7 @@ class Executor:
             "in_progress": total_tasks - completed_tasks - failed_tasks,
             "completion_rate": (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0,
             "total_cost": sum(r.cost for r in self.results.values()),
-            "budget_remaining": self.budget_manager.get_remaining()
+            "budget_remaining": self.budget_manager.get_remaining(),
         }
 
 

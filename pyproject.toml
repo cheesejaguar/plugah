@@ -3,19 +3,27 @@ name = "plugah"
 version = "0.1.0"
 description = "Multi-agent orchestration system with organizational hierarchy"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "Plugah Team", email = "hello@plugah.ai" }
 ]
-keywords = ["ai", "agents", "orchestration", "crewai", "automation"]
+maintainers = [
+    { name = "Aaron", email = "aaron@plugah.ai" }
+]
+keywords = ["ai", "agents", "orchestration", "crewai", "automation", "llm", "multi-agent"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
 dependencies = [
@@ -29,6 +37,13 @@ dependencies = [
     "jinja2>=3.1.0",
     "python-dateutil>=2.8.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/cheesejaguar/plugah"
+Documentation = "https://github.com/cheesejaguar/plugah#readme"
+Repository = "https://github.com/cheesejaguar/plugah.git"
+Issues = "https://github.com/cheesejaguar/plugah/issues"
+Changelog = "https://github.com/cheesejaguar/plugah/releases"
 
 [project.optional-dependencies]
 dev = [
@@ -59,9 +74,11 @@ packages = ["plugah"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C90", "RUF"]
-ignore = ["E501", "B008"]
+ignore = ["E501", "B008", "C901"]
 
 [tool.mypy]
 python_version = "3.11"

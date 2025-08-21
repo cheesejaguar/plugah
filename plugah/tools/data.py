@@ -19,7 +19,7 @@ class DataTool(BaseTool):
         operations = {
             "analyze": f"Analysis of {data_source}: [Mock statistics]",
             "transform": f"Transformed data from {data_source}",
-            "query": f"Query results from {data_source}"
+            "query": f"Query results from {data_source}",
         }
 
         return operations.get(operation, f"Processed {data_source}")

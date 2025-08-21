@@ -12,7 +12,7 @@ type Phase = 'prompt' | 'discovery' | 'planning' | 'execution' | 'complete'
 function App() {
   const [phase, setPhase] = useState<Phase>('prompt')
   const [sessionId, setSessionId] = useState<string>('')
-  const [projectTitle, setProjectTitle] = useState<string>('')
+  const [, setProjectTitle] = useState<string>('')
   const [budget, setBudget] = useState<number>(0)
   const [oag, setOag] = useState<any>(null)
   const [metrics, setMetrics] = useState<any>(null)
@@ -149,7 +149,7 @@ function PlanningView({ sessionId, onComplete }: any) {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        await response.json()
         
         // Fetch the OAG
         const oagResponse = await fetch(`/status/oag/${sessionId}`)
@@ -196,7 +196,7 @@ function ExecutionView({ sessionId, oag, onComplete }: any) {
   )
 }
 
-function CompleteView({ sessionId, metrics, budget }: any) {
+function CompleteView({ sessionId, metrics }: any) {
   return (
     <div className="card">
       <h2 className="text-2xl font-bold text-green-600 mb-4">Project Complete!</h2>
