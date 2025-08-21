@@ -36,7 +36,7 @@ body:
     id: claude_prompt
     attributes:
       label: Claude Code Prompt (Detailed)
-      description: Paste a detailed prompt to run with Claude Code. It should instruct the agent to load this repo in your vibecoder of choice, create a new branch, implement the change, update docs/tests, and open a PR.
+      description: Paste a detailed prompt for an agent that understands this codebase (Cursor/Claude Code/Codex). Instruct it to load the repo, create a branch, implement the change, update docs/tests, and open a PR.
       render: markdown
       value: |
         You are Claude Code working in the "plugah" repository (Multi-agent orchestration system).
@@ -45,7 +45,7 @@ body:
         - [Replace with your Bug or Feature description]
 
         Instructions:
-        - Load the repository in your vibecoder of choice (Cursor, Windsurf, VS Code + Continue, Zed, etc.).
+        - Load the repository in your vibecoder of choice (Cursor, Claude Code, VS Code + Continue, Zed, Windsurf).
         - Create a new branch from `main`:
           ```bash
           git checkout main
@@ -54,13 +54,13 @@ body:
           ```
         - Implement the change:
           - [Describe specific changes needed]
-          - Update relevant files in `plugah/` directory
-          - Follow existing code patterns and conventions
+          - Update relevant files in `plugah/` (keep changes minimal and focused)
+          - Follow existing patterns (types, linting, structure)
         - Run tests and linting:
           ```bash
           source .venv/bin/activate
           pytest
-          ruff check plugah
+          ruff format plugah tests && ruff check plugah tests
           mypy plugah
           ```
         - Update documentation if needed:
