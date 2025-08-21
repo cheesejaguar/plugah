@@ -101,7 +101,9 @@ class Executor:
         try:
             import os
 
-            if os.getenv("PLUGAH_REAL_EXECUTION", "").lower() in {"1", "true", "yes"}:
+            # Enable real execution by default unless explicitly disabled
+            enable_flag = os.getenv("PLUGAH_REAL_EXECUTION", "1").lower()
+            if enable_flag not in {"0", "false", "no"}:
                 self.crew = CrewBuilder.build_crew(agents, tasks, self.oag)
                 self.use_real_execution = True
         except Exception:

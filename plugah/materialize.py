@@ -8,7 +8,7 @@ from typing import Any
 from crewai import Agent, Crew, Task
 
 from .cache import get_cache
-from .oag_schema import OAG, AgentSpec, TaskSpec
+from .oag_schema import OAG, AgentSpec, TaskSpec, RoleLevel
 from .registry import TOOL_REGISTRY
 
 
@@ -37,7 +37,7 @@ class Materializer:
 
         # Materialize agents
         for agent_id, agent_spec in oag.get_agents().items():
-            agent = self._materialize_agent(agent_spec, llm_provider)
+            agent = self._materialize_agent(oag, agent_spec, llm_provider)
             agents[agent_id] = agent
             id_map[agent_id] = {"type": "agent", "crewai_obj": agent, "spec": agent_spec}
 
@@ -47,7 +47,7 @@ class Materializer:
             agent = agents.get(task_spec.agent_id)
             if not agent:
                 # Create a default agent if missing
-                agent = self._create_default_agent(task_spec.agent_id)
+                agent = self._create_default_agent(oag, task_spec.agent_id)
                 agents[task_spec.agent_id] = agent
 
             task = self._materialize_task(task_spec, agent, oag)
@@ -56,7 +56,7 @@ class Materializer:
 
         return agents, tasks, id_map
 
-    def _materialize_agent(self, spec: AgentSpec, llm_provider: str | None = None) -> Agent:
+    def _materialize_agent(self, oag: OAG, spec: AgentSpec, llm_provider: str | None = None) -> Agent:
         """Convert AgentSpec to CrewAI Agent"""
 
         # Load tools
@@ -71,8 +71,25 @@ class Materializer:
         if spec.specialization:
             role_str = f"{spec.specialization} ({spec.role})"
 
-        # Get LLM config from environment
-        # Prefer explicit model on spec, else env, else default to OpenAI gpt-5-nano
+        # Ensure a non-empty, role-specific system prompt
+        system_prompt = (spec.system_prompt or "").strip()
+        if not system_prompt:
+            from .selector import Selector
+
+            selector = Selector()
+            try:
+                system_prompt = selector.compose_system_prompt(
+                    role=spec.role,
+                    level=spec.level,
+                    project_title=oag.meta.title,
+                    domain=oag.meta.domain,
+                    specialization=spec.specialization,
+                    context={},
+                )
+            except Exception:
+                system_prompt = f"You are a {spec.level.value} {spec.role} for {oag.meta.title}. Execute tasks precisely to the definition of done."
+
+        # Get LLM config from environment (prefer explicit model on spec)
         llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano")
 
         # Create agent
@@ -85,7 +102,7 @@ class Materializer:
             max_iter=5,
             verbose=True,
             allow_delegation=(spec.level.value in ["C_SUITE", "VP", "DIRECTOR"]),
-            system_template=spec.system_prompt,
+            system_template=system_prompt,
         )
 
         return agent
@@ -152,8 +169,22 @@ class Materializer:
         self.tool_cache[cache_key] = tool
         return tool
 
-    def _create_default_agent(self, agent_id: str) -> Agent:
+    def _create_default_agent(self, oag: OAG, agent_id: str) -> Agent:
         """Create a default agent for tasks without assigned agents"""
+        from .selector import Selector
+
+        selector = Selector()
+        try:
+            sys_tmpl = selector.compose_system_prompt(
+                role="Default Worker",
+                level=RoleLevel.IC,
+                project_title=oag.meta.title,
+                domain=oag.meta.domain,
+                specialization="Software Engineer",
+                context={},
+            )
+        except Exception:
+            sys_tmpl = f"You are a Default Worker for {oag.meta.title}. Complete assigned tasks accurately."
 
         return Agent(
             role="Default Worker",
@@ -163,6 +194,7 @@ class Materializer:
             llm=os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano"),
             max_iter=3,
             verbose=True,
+            system_template=sys_tmpl,
         )
 
     def _extract_goal_from_prompt(self, system_prompt: str) -> str:

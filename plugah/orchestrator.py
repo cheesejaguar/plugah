@@ -256,6 +256,7 @@ class BoardRoom:
                 TaskSpec,
                 TaskStatus,
             )
+            from .selector import Selector
 
             meta = OrgMeta(
                 project_id=self.project_id,
@@ -270,11 +271,21 @@ class BoardRoom:
             )
 
             # Create minimal org structure
+            selector = Selector()
+
             ceo = AgentSpec(
                 id="ceo",
                 role="CEO",
                 level=RoleLevel.C_SUITE,
-                llm="gpt-3.5-turbo",
+                llm="gpt-5-nano",
+                system_prompt=selector.compose_system_prompt(
+                    role="CEO",
+                    level=RoleLevel.C_SUITE,
+                    project_title=meta.title,
+                    domain=meta.domain,
+                    specialization=None,
+                    context={"objectives": []},
+                ),
             )
 
             task = TaskSpec(
