@@ -348,11 +348,16 @@ class BoardRoom:
             "project_id": self.project_id
         })
 
-        # Create executor
+        # Create executor with settings
         self.executor = Executor(
             self.oag,
             self.budget_manager
         )
+        
+        # Check for real execution mode from env
+        import os
+        if os.getenv("USE_REAL_EXECUTION", "false").lower() == "true":
+            self.executor.use_real_execution = True
 
         # Add execution callbacks
         self.executor.add_callback(self._handle_execution_event)

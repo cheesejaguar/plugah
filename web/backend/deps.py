@@ -17,9 +17,15 @@ class Settings(BaseSettings):
     max_budget: float = 10000.0
     default_budget_policy: str = "balanced"
     session_timeout_minutes: int = 60
+    openai_api_key: Optional[str] = None
+    use_real_execution: bool = False
+    default_llm_model: str = "gpt-3.5-turbo"
+    cache_dir: str = ".cache"
+    redis_url: Optional[str] = None
     
     class Config:
         env_file = ".env"
+        env_file_encoding = "utf-8"
 
 
 settings = Settings()

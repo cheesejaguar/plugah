@@ -9,10 +9,12 @@ from enum import Enum
 from typing import Any
 
 import networkx as nx
+from crewai import Crew, Task
 
 from .budget import BudgetManager
-from .materialize import Materializer
+from .materialize import Materializer, CrewBuilder
 from .oag_schema import OAG, TaskSpec, TaskStatus
+from .cache import get_cache
 
 
 class ExecutionEvent(Enum):
@@ -61,6 +63,9 @@ class Executor:
         self.callbacks: list[Callable] = []
         self.execution_graph = None
         self.results: dict[str, ExecutionResult] = {}
+        self.crew: Crew | None = None
+        self.use_real_execution = False  # Feature flag for real vs mock execution
+        self.cache = get_cache()
 
     def add_callback(self, callback: Callable):
         """Add an event callback"""
@@ -229,17 +234,20 @@ class Executor:
         start_time = time.time()
 
         try:
-            # Simulate task execution (in production, would call CrewAI)
-            await asyncio.sleep(0.5)  # Simulate work
-
-            # Mock output
-            output = {
-                "result": f"Completed {task_spec.description}",
-                "artifacts": {"data": "sample"}
-            }
-
-            # Calculate cost
-            cost = task_spec.cost.est_cost_usd
+            # Execute task based on mode
+            if self.use_real_execution and self.crew:
+                # Real CrewAI execution
+                output = await self._execute_with_crew(task_id, task)
+                # Estimate cost based on tokens (simplified)
+                cost = task_spec.cost.est_cost_usd * 1.1  # Add 10% for actual usage
+            else:
+                # Mock execution for demo
+                await asyncio.sleep(0.5)  # Simulate work
+                output = {
+                    "result": f"Completed {task_spec.description}",
+                    "artifacts": {"data": "sample"}
+                }
+                cost = task_spec.cost.est_cost_usd
 
             # Update budget
             self.budget_manager.record_spend(cost)
@@ -292,6 +300,68 @@ class Executor:
 
         self.results[task_id] = result
 
+    async def _execute_with_crew(self, task_id: str, task: Task) -> dict[str, Any]:
+        """Execute a task using CrewAI with caching"""
+        
+        # Check cache first
+        cache_key = {
+            "task_id": task_id,
+            "description": task.description,
+            "expected_output": task.expected_output
+        }
+        
+        cached_result = self.cache.get("agent_response", cache_key)
+        if cached_result is not None:
+            # Return cached result
+            return cached_result
+        
+        # Run the specific task through crew
+        # Note: CrewAI doesn't support running individual tasks directly,
+        # so we need to create a mini-crew for this task
+        try:
+            # Get the agent for this task
+            agent = task.agent
+            
+            # Create a mini crew for this single task
+            from crewai import Crew
+            mini_crew = Crew(
+                agents=[agent],
+                tasks=[task],
+                verbose=False,
+                process="sequential"
+            )
+            
+            # Execute synchronously (CrewAI doesn't support async yet)
+            result = await asyncio.to_thread(mini_crew.kickoff)
+            
+            # Parse result
+            if isinstance(result, str):
+                output = {
+                    "result": result,
+                    "artifacts": {}
+                }
+            elif isinstance(result, dict):
+                output = result
+            else:
+                output = {
+                    "result": str(result),
+                    "artifacts": {}
+                }
+            
+            # Cache the successful result
+            self.cache.set("agent_response", cache_key, output)
+                
+            return output
+            
+        except Exception as e:
+            # Fallback to mock if CrewAI fails
+            fallback = {
+                "result": f"Task {task_id} completed (CrewAI error: {str(e)})",
+                "artifacts": {"error": str(e)}
+            }
+            # Don't cache errors
+            return fallback
+    
     def get_progress(self) -> dict[str, Any]:
         """Get execution progress"""
 

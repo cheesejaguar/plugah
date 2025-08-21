@@ -8,6 +8,7 @@ from crewai import Agent, Crew, Task
 
 from .oag_schema import OAG, AgentSpec, TaskSpec
 from .registry import TOOL_REGISTRY
+from .cache import get_cache
 
 
 class Materializer:
@@ -15,6 +16,7 @@ class Materializer:
 
     def __init__(self):
         self.tool_cache = {}
+        self.cache_manager = get_cache()
 
     def materialize(
         self,
@@ -82,13 +84,17 @@ class Materializer:
         if spec.specialization:
             role_str = f"{spec.specialization} ({spec.role})"
 
+        # Get LLM config from environment
+        import os
+        llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-3.5-turbo")
+        
         # Create agent
         agent = Agent(
             role=role_str,
             goal=self._extract_goal_from_prompt(spec.system_prompt),
             backstory=self._create_backstory(spec),
             tools=tools,
-            llm=spec.llm or "gpt-3.5-turbo",
+            llm=llm_model,
             max_iter=5,
             verbose=True,
             allow_delegation=(spec.level.value in ["C_SUITE", "VP", "DIRECTOR"]),
@@ -135,17 +141,36 @@ class Materializer:
         if not tool_def:
             return None
 
-        # Create a proper CrewAI tool wrapper
+        # Create a proper CrewAI tool wrapper with caching
         from crewai.tools import BaseTool
         
-        class DynamicTool(BaseTool):
+        cache_manager = self.cache_manager
+        
+        class CachedDynamicTool(BaseTool):
             name: str = tool_id
             description: str = tool_def.description
             
             def _run(self, *args, **kwargs):
-                return f"Tool {tool_id} executed with args: {args}, kwargs: {kwargs}"
+                # Check cache first
+                cache_data = {
+                    "tool": tool_id,
+                    "args": args,
+                    "kwargs": kwargs
+                }
+                
+                cached_result = cache_manager.get(f"tool_{tool_id}", cache_data)
+                if cached_result is not None:
+                    return cached_result
+                
+                # Execute tool (in production, this would call actual tool logic)
+                result = f"Tool {tool_id} executed with args: {args}, kwargs: {kwargs}"
+                
+                # Cache the result
+                cache_manager.set(f"tool_{tool_id}", cache_data, result)
+                
+                return result
         
-        tool = DynamicTool()
+        tool = CachedDynamicTool()
         self.tool_cache[cache_key] = tool
         return tool
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { DollarSign, TrendingUp, AlertTriangle } from 'lucide-react'
+import { DollarSign, AlertTriangle } from 'lucide-react'
 
 interface BudgetPanelProps {
   sessionId: string
