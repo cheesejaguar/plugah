@@ -56,23 +56,78 @@ class Startup:
         return self.prd
 
     async def _generate_questions(self, problem: str, context: dict[str, Any]) -> list[str]:
-        """Generate discovery questions"""
+        """Generate discovery questions (LLM-backed when not in mock mode)"""
 
-        # For demo, return pre-defined questions
-        # In production, this would use an LLM
+        # If explicitly in mock mode, keep deterministic output
+        import os
+        if os.getenv("PLUGAH_MODE", "").lower() == "mock":
+            return [
+                "Who are the primary users/customers for this solution?",
+                "What are the top 3 success criteria that would define project completion?",
+                "What technical constraints or requirements must be met?",
+                "What is the expected timeline for delivery?",
+                "Are there any existing systems or data sources to integrate with?",
+            ]
 
-        questions = [
-            "Who are the primary users/customers for this solution?",
-            "What are the top 3 success criteria that would define project completion?",
-            "What technical constraints or requirements must be met?",
-            "What is the expected timeline for delivery?",
-            "Are there any existing systems or data sources to integrate with?",
-            "What are the primary risks or challenges you foresee?",
-            "What should explicitly NOT be included in this project (non-goals)?",
-            "How will you measure the success of this project post-launch?",
-        ]
+        from .llm import LLM
+        import json
+        import re
 
-        return questions[:5]  # Return top 5 questions
+        system = (
+            "You are a senior product discovery specialist. "
+            "Generate exactly 5 sharp, non-overlapping discovery questions to plan a project."
+        )
+        user = (
+            f"Project: {problem}\n"
+            f"Context: {json.dumps(context or {}, ensure_ascii=False)}\n"
+            "Return as a bullet list or numbered lines."
+        )
+
+        text = LLM().reason(system=system, user=user)
+
+        def _fallback() -> list[str]:
+            return [
+                "Who are the primary users/customers for this solution?",
+                "What are the top 3 success criteria that would define project completion?",
+                "What technical constraints or requirements must be met?",
+                "What is the expected timeline for delivery?",
+                "Are there any existing systems or data sources to integrate with?",
+            ]
+
+        if not text:
+            return _fallback()
+
+        # Try parse JSON first
+        parsed: list[str] = []
+        try:
+            data = json.loads(text)
+            if isinstance(data, list):
+                parsed = [str(x).strip() for x in data]
+        except Exception:
+            pass
+
+        if not parsed:
+            # Fallback: split lines and strip bullets/numbers
+            lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+            cleaned = []
+            for ln in lines:
+                # Remove leading bullets/numbers like "- ", "1. ", "• "
+                ln = re.sub(r"^\s*([\-\*•]|\d+\.)\s+", "", ln)
+                cleaned.append(ln)
+            parsed = [q for q in cleaned if q.endswith("?") or ("?" in q and len(q) < 160)]
+
+        # Ensure exactly 5 concise questions
+        parsed = [q.strip() for q in parsed if q.strip()][:5]
+        if len(parsed) < 5:
+            # Pad with safe defaults to reach 5
+            pad = _fallback()
+            for q in pad:
+                if len(parsed) >= 5:
+                    break
+                if q not in parsed:
+                    parsed.append(q)
+
+        return parsed
 
     async def _generate_prd(
         self, problem: str, answers: list[str], budget_usd: float
