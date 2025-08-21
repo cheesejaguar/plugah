@@ -13,13 +13,13 @@ class PlugahError(Exception):
         self.details = details or {}
 
 
-class InvalidInput(PlugahError):
+class InvalidInput(PlugahError):  # noqa: N818
     """Invalid input provided to a Plugah API"""
 
     pass
 
 
-class BudgetExceeded(PlugahError):
+class BudgetExceeded(PlugahError):  # noqa: N818
     """Budget limits have been exceeded"""
 
     pass
@@ -179,3 +179,4 @@ class Event:
             "acc_cost": self.acc_cost,
             "metadata": self.metadata,
         }
+
