@@ -1,108 +1,95 @@
 name: "✨ Feature Request"
-description: "Suggest a new feature or enhancement for Plugah"
-title: "[Feature]: "
-labels: ["enhancement", "needs-triage"]
+description: "Propose an enhancement with a Claude Code prompt and branch/PR plan."
+title: "[Feature Request]: <short summary>"
+labels: ["enhancement"]
 assignees: []
 
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a feature! Please provide details about your use case and how this would benefit the project.
-
-  - type: textarea
-    id: problem
-    attributes:
-      label: Problem Statement
-      description: Describe the problem or need this feature would address.
-      placeholder: |
-        Currently, there's no way to pause execution mid-flight and resume later.
-        This makes it difficult to handle long-running tasks that might span multiple sessions.
-    validations:
-      required: true
-
-  - type: textarea
-    id: solution
-    attributes:
-      label: Proposed Solution
-      description: Describe your proposed solution or feature.
-      placeholder: |
-        Add checkpoint/resume functionality:
-        - Save execution state after each task completion
-        - Provide a `--resume <checkpoint-id>` flag
-        - Store checkpoints in `.runs/{project_id}/checkpoints/`
-      render: markdown
-    validations:
-      required: true
-
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives Considered
-      description: What alternatives have you considered?
-      placeholder: |
-        - Using persistent background jobs (too complex)
-        - Breaking into smaller budget chunks (loses context)
-        - Manual state management (error-prone)
-
-  - type: textarea
-    id: use_case
-    attributes:
-      label: Use Case
-      description: Describe your specific use case for this feature.
-      placeholder: |
-        I'm using Plugah to generate large codebases that take hours to complete.
-        I need to be able to pause overnight and resume in the morning.
-    validations:
-      required: true
-
-  - type: dropdown
-    id: impact
-    attributes:
-      label: Expected Impact
-      description: How many users would benefit from this feature?
-      options:
-        - Just me
-        - A few users
-        - Many users
-        - Most users
-      default: 1
-
-  - type: dropdown
-    id: component
-    attributes:
-      label: Affected Component
-      description: Which component would this feature affect?
-      options:
-        - Core Orchestrator (BoardRoom)
-        - Planning (OAG Generation)
-        - Execution (Task Runner)
-        - Budget Management (CFO)
-        - Metrics & OKRs
-        - Tools & Agents
-        - Web Interface
-        - API & Types
-        - New Component
-      default: 0
-    validations:
-      required: true
-
-  - type: textarea
-    id: implementation
-    attributes:
-      label: Implementation Notes
-      description: Any thoughts on how this could be implemented?
-      placeholder: |
-        Could extend the existing state persistence:
-        - Add checkpoint_id to BoardRoom state
-        - Serialize executor state including partial results
-        - Add resume() method that rebuilds from checkpoint
+        Have an idea to improve Plugah? Please:
+        - Prefix the title with [Feature Request].
+        - Provide a complete Claude Code prompt to implement your feature in a new branch.
+        - You’re welcome to create the branch and open a PR while you’re here. 🚀
 
   - type: checkboxes
-    id: contribution
+    id: title_prefix
     attributes:
-      label: Contribution
+      label: Title Prefix
+      description: Confirm the title starts with [Feature Request].
       options:
-        - label: I am willing to help implement this feature
-        - label: I am willing to help test this feature
-        - label: I am willing to help document this feature
+        - label: I prefixed the title with [Feature Request].
+          required: true
+
+  - type: textarea
+    id: overview
+    attributes:
+      label: Summary / Motivation
+      description: What problem does this solve? What’s the value?
+      placeholder: >
+        Example: Add `--dry-run` to preview costs and planned actions without execution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope / Constraints
+      description: Add scope boundaries, budget/policy considerations, or compat notes.
+      placeholder: |
+        - CLI flag: `--dry-run`
+        - No provider calls; only simulate execution
+        - Update README examples
+    validations:
+      required: false
+
+  - type: textarea
+    id: claude_prompt
+    attributes:
+      label: Claude Code Prompt (Detailed)
+      description: Paste a detailed prompt for an agent that understands the codebase (Cursor/Claude Code/Codex). Instruct it to load this repo, create a branch, implement the feature, update tests/docs, and open a PR.
+      render: markdown
+      value: |
+        You are Claude Code working in the "plugah" repository (Multi-agent orchestration system).
+
+        Feature:
+        - [Replace with the desired behavior and constraints]
+
+        Instructions:
+        - Load the repository in your vibecoder of choice (Cursor, Windsurf, VS Code + Continue, Zed, etc.).
+        - Create a new branch from `main`:
+          - Branch name suggestion: `feature/<short-slug>`
+        - Implement the feature:
+          - Keep changes minimal and focused. Follow patterns in `plugah/`, `tests/`, and CI.
+          - Add/adjust tests under `tests/` to cover new behavior.
+          - Update `README.md` and CLI help with examples/flags.
+        - Validate locally:
+          - Run `pytest` (mock mode where applicable).
+          - Sanity-check CLI: `plugah-demo --help`.
+        - Commit, push, and open a PR targeting `main` with a concise summary.
+
+        Acceptance Criteria:
+        - [ ] Feature implemented and covered by tests
+        - [ ] Docs/examples updated
+        - [ ] No regressions in Discovery → PRD → OAG → Execution
+
+        Notes / Constraints:
+        - [Budgets, policies, model hints, or integration notes]
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Additional Acceptance Criteria (Optional)
+      placeholder: |
+        - [ ] CLI flag documented with examples
+        - [ ] API request/response documented in README
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        You’re welcome to go ahead and create the branch and open a PR yourself — we appreciate proactive contributions! ✨
