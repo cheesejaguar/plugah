@@ -113,6 +113,23 @@ class BoardRoom:
             questions = discovery.get("questions", [])
 
         self._state["questions"] = questions
+        # Write initial PRD draft (discovery in progress)
+        try:
+            self._write_root_prd_md(
+                {
+                    "title": self._state.get("problem", "Project"),
+                    "problem_statement": problem,
+                    "budget": budget_usd,
+                    "policy": (policy.value if isinstance(policy, BudgetPolicy) else str(policy)),
+                    "status": "discovery_in_progress",
+                    "objectives": [],
+                    "success_criteria": [],
+                    "constraints": [],
+                }
+            )
+        except Exception:
+            pass
+
         self._emit_event(
             Event(
                 phase="startup",
@@ -205,6 +222,12 @@ class BoardRoom:
 
         self.prd = PRD(prd_data)
         self._state["prd"] = prd_data
+
+        # Persist PRD.md after discovery
+        try:
+            self._write_root_prd_md(prd_data)
+        except Exception:
+            pass
 
         self._emit_event(
             Event(
@@ -319,6 +342,12 @@ class BoardRoom:
 
         self._state["oag"] = self.oag.model_dump()
 
+        # Generate subteam PRD.md files for managers with reports
+        try:
+            self._write_subteam_prds(self.oag)
+        except Exception:
+            pass
+
         self._emit_event(
             Event(
                 phase="planning",
@@ -408,6 +437,112 @@ class BoardRoom:
         return ExecutionResult(
             total_cost=total_cost, artifacts=artifacts, metrics=metrics, details=details
         )
+
+    # ---------- ReOrg & PRD management ----------
+    def reorg(self, updated_prd: PRD | dict[str, Any]) -> OAG:
+        """Apply PRD updates and regenerate OAG and PRD docs (ReOrg)."""
+        if isinstance(updated_prd, PRD):
+            prd = updated_prd
+        else:
+            prd = PRD(updated_prd)
+
+        self.prd = prd
+
+        # Re-plan org from updated PRD
+        selector = Selector(budget_policy=self._state.get("policy", BudgetPolicy.BALANCED))
+        self.planner = Planner(selector)
+        oag = self.planner.plan(prd.to_dict(), self._state.get("budget_usd", 0.0))
+        self.oag = oag
+
+        # Rewrite PRD.md and subteam PRDs
+        self._write_root_prd_md(prd.to_dict())
+        self._write_subteam_prds(oag)
+
+        return oag
+
+    def _write_root_prd_md(self, prd: dict[str, Any]) -> None:
+        """Write the root PRD.md for the current project."""
+        from pathlib import Path
+
+        runs_dir = Path(".runs") / self.project_id
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        prd_path = runs_dir / "PRD.md"
+
+        title = prd.get("title") or self._state.get("problem", "Project")
+        problem = prd.get("problem_statement", self._state.get("problem", ""))
+        budget = prd.get("budget", self._state.get("budget_usd", 0))
+        policy = prd.get("policy", self._state.get("policy", "balanced"))
+        objectives = prd.get("objectives", [])
+        success = prd.get("success_criteria", [])
+        constraints = prd.get("constraints", [])
+
+        lines = [
+            f"# PRD: {title}",
+            "",
+            "This document aligns all agents with company OKRs and KPIs.",
+            "",
+            "## Overview",
+            f"- Problem: {problem}",
+            f"- Budget: ${budget}",
+            f"- Policy: {policy}",
+            "",
+            "## Success Criteria",
+            *[f"- {s}" for s in success[:5]],
+            "",
+            "## Constraints",
+            *[f"- {c}" for c in constraints[:5]],
+            "",
+            "## Objectives",
+            *[f"- {o.get('title')}: {o.get('description', '')}" for o in objectives],
+            "",
+            "## Notes",
+            "This PRD follows an AGENTS.md-style instruction manual for agents.",
+        ]
+        prd_path.write_text("\n".join(lines))
+
+    def _write_subteam_prds(self, oag: OAG) -> None:
+        """Write PRD.md files for agents that manage subteams, inheriting root PRD."""
+        from pathlib import Path
+
+        # Build manager->reports map
+        reports: dict[str, list[str]] = {}
+        for agent_id, agent in oag.get_agents().items():
+            if agent.manager_id:
+                reports.setdefault(agent.manager_id, []).append(agent_id)
+
+        root_dir = Path(".runs") / self.project_id / "teams"
+        root_dir.mkdir(parents=True, exist_ok=True)
+
+        for manager_id, children in reports.items():
+            if not children:
+                continue
+            mgr = oag.get_node(manager_id)
+            if mgr is None:
+                continue
+            # Compose team PRD
+            path = root_dir / manager_id / "PRD.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Gather team metrics
+            okrs = getattr(mgr, "okrs", []) or []
+            kpis = getattr(mgr, "kpis", []) or []
+
+            lines = [
+                f"# Team PRD: {getattr(mgr, 'role', manager_id)}",
+                "",
+                "Inherits from ../PRD.md and specifies team OKRs/KPIs and roll-ups.",
+                "",
+                "## OKRs",
+                *[f"- {okr.objective.title}: {okr.objective.description}" for okr in okrs],
+                "",
+                "## KPIs",
+                *[f"- {kpi.metric}: target {kpi.target} ({kpi.direction.value})" for kpi in kpis],
+                "",
+                "## Reporting",
+                f"- Reports to: {getattr(oag.get_node(getattr(mgr, 'manager_id', '') or ''), 'role', 'BoardRoom')}",
+                f"- Direct reports: {len(children)}",
+            ]
+            path.write_text("\n".join(lines))
 
     def to_dict(self) -> dict[str, Any]:
         """
