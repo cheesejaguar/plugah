@@ -2,6 +2,9 @@
 Top orchestrator: CEO/CTO/CFO + startup discovery, patch loop
 """
 
+import json
+import os
+import re
 import uuid
 from collections.abc import Callable
 from datetime import datetime
@@ -10,6 +13,7 @@ from typing import Any
 from .audit import AuditLogger
 from .budget import CFO, BudgetManager
 from .executor import ExecutionEvent, Executor
+from .llm import LLM
 from .metrics import MetricsEngine
 from .oag_schema import OAG
 from .patches import PatchManager
@@ -59,8 +63,6 @@ class Startup:
         """Generate discovery questions (LLM-backed when not in mock mode)"""
 
         # If explicitly in mock mode, keep deterministic output
-        import os
-
         if os.getenv("PLUGAH_MODE", "").lower() == "mock":
             return [
                 "Who are the primary users/customers for this solution?",
@@ -69,10 +71,6 @@ class Startup:
                 "What is the expected timeline for delivery?",
                 "Are there any existing systems or data sources to integrate with?",
             ]
-
-        import json
-        import re
-        from .llm import LLM
 
         system = (
             "You are a senior product discovery specialist. "

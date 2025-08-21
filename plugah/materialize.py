@@ -2,13 +2,13 @@
 Converts OAG into CrewAI Agent & Task instances
 """
 
-import os
 from typing import Any
+import os
 
 from crewai import Agent, Crew, Task
 
 from .cache import get_cache
-from .oag_schema import OAG, AgentSpec, TaskSpec, RoleLevel
+from .oag_schema import AgentSpec, OAG, RoleLevel, TaskSpec
 from .registry import TOOL_REGISTRY
 
 
