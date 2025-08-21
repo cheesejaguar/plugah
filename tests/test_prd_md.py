@@ -54,6 +54,50 @@ async def test_subteam_prd_created_after_planning(monkeypatch, tmp_path):
     assert _found is not None  # existence checked by directory assertion above
 
 
+@pytest.mark.asyncio
+async def test_prd_rollups_and_parent_link(monkeypatch, tmp_path):
+    # Use real planning (not mock) to ensure hierarchy exists without hitting the LLM
+    monkeypatch.delenv("PLUGAH_MODE", raising=False)
+    monkeypatch.chdir(tmp_path)
+
+    from plugah import BoardRoom, BudgetPolicy, PRD
+
+    br = BoardRoom()
+    # Seed a minimal PRD so plan_organization will write the enriched root PRD with roll-ups
+    prd = PRD(
+        {
+            "title": "Test Project",
+            "problem_statement": "Do a thing",
+            "budget": 100.0,
+            "objectives": [{"id": "o1", "title": "Obj1", "description": "Desc"}],
+            "success_criteria": ["Works"],
+            "constraints": ["None"],
+        }
+    )
+    br.prd = prd
+
+    # Plan organization (no LLM used here) and generate PRDs
+    await br.plan_organization(prd=prd, budget_usd=100.0, policy=BudgetPolicy.BALANCED)
+
+    # Root PRD contains roll-up section
+    root_prd = Path(".runs") / br.project_id / "PRD.md"
+    assert root_prd.exists()
+    root_text = root_prd.read_text()
+    assert "Organization OKR Roll-up" in root_text
+    assert "KPI Summary" in root_text
+
+    # Find at least one team PRD and assert it links to parent
+    teams_dir = Path(".runs") / br.project_id / "teams"
+    any_team = None
+    if teams_dir.exists():
+        for f in teams_dir.rglob("PRD.md"):
+            any_team = f
+            break
+    assert any_team is not None, "Expected at least one team PRD in non-mock planning"
+    team_text = any_team.read_text()
+    assert "../../PRD.md" in team_text
+
+
 def test_reorg_updates_root_prd(monkeypatch, tmp_path):
     monkeypatch.setenv("PLUGAH_MODE", "mock")
     monkeypatch.chdir(tmp_path)
