@@ -70,8 +70,8 @@ class KeyResult(BaseModel):
     id: str
     objective_id: str
     metric: str
-    target: float | int
-    current: float | int = 0
+    target: Union[float, int]
+    current: Union[float, int] = 0
     direction: Direction = Direction.GTE
 
 
@@ -83,8 +83,8 @@ class OKR(BaseModel):
 class KPI(BaseModel):
     id: str
     metric: str
-    target: float | int
-    current: float | int = 0
+    target: Union[float, int]
+    current: Union[float, int] = 0
     direction: Direction = Direction.GTE
     owner_agent_id: str
 
@@ -164,7 +164,7 @@ class BudgetModel(BaseModel):
 class OAG(BaseModel):
     meta: OrgMeta
     budget: BudgetModel
-    nodes: dict[str, AgentSpec | TaskSpec]
+    nodes: dict[str, Union[AgentSpec, TaskSpec]]
     edges: list[Edge] = []
 
     @field_validator('nodes')
@@ -184,7 +184,7 @@ class OAG(BaseModel):
     def get_node(self, node_id: str) -> Optional[Union[AgentSpec, TaskSpec]]:
         return self.nodes.get(node_id)
 
-    def add_node(self, node: AgentSpec | TaskSpec):
+    def add_node(self, node: Union[AgentSpec, TaskSpec]):
         self.nodes[node.id] = node
 
     def add_edge(self, edge: Edge):

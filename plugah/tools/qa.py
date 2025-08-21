@@ -2,7 +2,7 @@
 QA and testing tool stubs
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from crewai_tools import BaseTool
 
@@ -17,7 +17,7 @@ class QATool(BaseTool):
         self,
         test_type: str,
         target: str,
-        config: dict[str, Any] | None = None
+        config: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
         """Run tests"""
 
@@ -59,7 +59,7 @@ class QATool(BaseTool):
         self,
         test_type: str,
         target: str,
-        config: dict[str, Any] | None = None
+        config: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
         """Async test execution"""
         return self._run(test_type, target, config)

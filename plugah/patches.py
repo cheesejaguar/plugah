@@ -4,7 +4,7 @@ JSON-Patch helpers (RFC6902) + audit log
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import jsonpatch
 
@@ -19,7 +19,7 @@ class PatchManager:
         self.audit_logger = audit_logger
         self.patch_history: list[dict[str, Any]] = []
 
-    def apply_patch(self, patch_ops: dict | list[dict]) -> bool:
+    def apply_patch(self, patch_ops: Union[dict, list[dict]]) -> bool:
         """
         Apply a JSON patch to the OAG
 
