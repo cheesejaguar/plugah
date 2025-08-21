@@ -8,7 +8,7 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+"""Lightweight wrapper around the OpenAI SDK."""
 
 
 class LLM:
@@ -50,4 +50,3 @@ class LLM:
             return choice.message.content or ""
         except Exception:
             return None
-

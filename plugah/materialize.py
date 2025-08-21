@@ -2,6 +2,7 @@
 Converts OAG into CrewAI Agent & Task instances
 """
 
+import os
 from typing import Any
 
 from crewai import Agent, Crew, Task
@@ -71,8 +72,6 @@ class Materializer:
             role_str = f"{spec.specialization} ({spec.role})"
 
         # Get LLM config from environment
-        import os
-
         # Prefer explicit model on spec, else env, else default to OpenAI gpt-5-nano
         llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano")
 

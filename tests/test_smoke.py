@@ -1,4 +1,3 @@
-import os
 import pytest
 
 
@@ -42,4 +41,3 @@ async def test_smoke_mock_mode(monkeypatch):
     result = await br.execute()
     assert result.total_cost >= 0.0
     assert "tasks_completed" in result.metrics
-
