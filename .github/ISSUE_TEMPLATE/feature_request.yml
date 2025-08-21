@@ -1,0 +1,108 @@
+name: "✨ Feature Request"
+description: "Suggest a new feature or enhancement for Plugah"
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please provide details about your use case and how this would benefit the project.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Describe the problem or need this feature would address.
+      placeholder: |
+        Currently, there's no way to pause execution mid-flight and resume later.
+        This makes it difficult to handle long-running tasks that might span multiple sessions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed solution or feature.
+      placeholder: |
+        Add checkpoint/resume functionality:
+        - Save execution state after each task completion
+        - Provide a `--resume <checkpoint-id>` flag
+        - Store checkpoints in `.runs/{project_id}/checkpoints/`
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What alternatives have you considered?
+      placeholder: |
+        - Using persistent background jobs (too complex)
+        - Breaking into smaller budget chunks (loses context)
+        - Manual state management (error-prone)
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case
+      description: Describe your specific use case for this feature.
+      placeholder: |
+        I'm using Plugah to generate large codebases that take hours to complete.
+        I need to be able to pause overnight and resume in the morning.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Expected Impact
+      description: How many users would benefit from this feature?
+      options:
+        - Just me
+        - A few users
+        - Many users
+        - Most users
+      default: 1
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which component would this feature affect?
+      options:
+        - Core Orchestrator (BoardRoom)
+        - Planning (OAG Generation)
+        - Execution (Task Runner)
+        - Budget Management (CFO)
+        - Metrics & OKRs
+        - Tools & Agents
+        - Web Interface
+        - API & Types
+        - New Component
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Notes
+      description: Any thoughts on how this could be implemented?
+      placeholder: |
+        Could extend the existing state persistence:
+        - Add checkpoint_id to BoardRoom state
+        - Serialize executor state including partial results
+        - Add resume() method that rebuilds from checkpoint
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to help implement this feature
+        - label: I am willing to help test this feature
+        - label: I am willing to help document this feature

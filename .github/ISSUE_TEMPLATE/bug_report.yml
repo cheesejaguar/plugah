@@ -1,0 +1,99 @@
+name: "🐛 Bug Report"
+description: "Report a bug in Plugah"
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please provide as much detail as possible.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: |
+        When I run plugah with a budget of $50, the CFO doesn't enforce the soft cap at $40 (80%).
+        Instead, it continues spending until the hard cap is reached.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Initialize BoardRoom with budget_usd=50
+        2. Run through all four phases
+        3. Monitor budget spending in execution phase
+        4. Observe that soft cap warnings don't trigger
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen.
+      placeholder: CFO should trigger warnings at 70% of soft cap and downgrades at 90%
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened.
+      placeholder: No warnings or downgrades occur until hard cap is reached
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide your environment details.
+      value: |
+        - Plugah Version: 
+        - Python Version: 
+        - OS: 
+        - PLUGAH_MODE: 
+        - LLM Provider: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please paste any relevant logs or error messages.
+      render: shell
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Minor (cosmetic issue)
+        - Moderate (feature partially broken)
+        - Major (feature completely broken)
+        - Critical (data loss or security issue)
+      default: 1
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues to avoid duplicates
+        - label: I have tested with the latest version
+        - label: I have included all relevant environment details
+        - label: I am willing to help test a fix
