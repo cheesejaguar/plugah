@@ -40,12 +40,14 @@ class BudgetManager:
         self.spent += amount
         self.budget.actual_cost_usd = self.spent
 
-        self.spend_history.append({
-            "amount": amount,
-            "description": description,
-            "total_spent": self.spent,
-            "remaining": self.get_remaining()
-        })
+        self.spend_history.append(
+            {
+                "amount": amount,
+                "description": description,
+                "total_spent": self.spent,
+                "remaining": self.get_remaining(),
+            }
+        )
 
         # Check alert thresholds
         self._check_alerts()
@@ -104,13 +106,15 @@ class BudgetManager:
     def _add_alert(self, level: BudgetAlert, message: str):
         """Add a budget alert"""
 
-        self.alerts.append({
-            "level": level,
-            "message": message,
-            "spent": self.spent,
-            "soft_cap": self.budget.caps.soft_cap_usd,
-            "hard_cap": self.budget.caps.hard_cap_usd
-        })
+        self.alerts.append(
+            {
+                "level": level,
+                "message": message,
+                "spent": self.spent,
+                "soft_cap": self.budget.caps.soft_cap_usd,
+                "hard_cap": self.budget.caps.hard_cap_usd,
+            }
+        )
 
     def get_recommendations(self) -> list[str]:
         """Get cost optimization recommendations based on current state"""
@@ -119,32 +123,40 @@ class BudgetManager:
         alert_level = self.get_alert_level()
 
         if alert_level == BudgetAlert.EMERGENCY:
-            recommendations.extend([
-                "URGENT: Halt all non-critical operations",
-                "Downgrade all models to economy tier",
-                "Disable expensive tools",
-                "Consider reducing scope immediately"
-            ])
+            recommendations.extend(
+                [
+                    "URGENT: Halt all non-critical operations",
+                    "Downgrade all models to economy tier",
+                    "Disable expensive tools",
+                    "Consider reducing scope immediately",
+                ]
+            )
         elif alert_level == BudgetAlert.EXCEEDED_SOFT:
-            recommendations.extend([
-                "Soft cap exceeded - implement cost controls",
-                "Switch to conservative budget policy",
-                "Reduce team size for remaining tasks",
-                "Use economy models for all ICs"
-            ])
+            recommendations.extend(
+                [
+                    "Soft cap exceeded - implement cost controls",
+                    "Switch to conservative budget policy",
+                    "Reduce team size for remaining tasks",
+                    "Use economy models for all ICs",
+                ]
+            )
         elif alert_level == BudgetAlert.CRITICAL:
-            recommendations.extend([
-                "Approaching soft cap - prepare contingencies",
-                "Consider deferring non-essential tasks",
-                "Downgrade models for non-critical roles",
-                "Limit tool usage to essentials"
-            ])
+            recommendations.extend(
+                [
+                    "Approaching soft cap - prepare contingencies",
+                    "Consider deferring non-essential tasks",
+                    "Downgrade models for non-critical roles",
+                    "Limit tool usage to essentials",
+                ]
+            )
         elif alert_level == BudgetAlert.WARNING:
-            recommendations.extend([
-                "Monitor spending closely",
-                "Review task priorities",
-                "Consider model optimization"
-            ])
+            recommendations.extend(
+                [
+                    "Monitor spending closely",
+                    "Review task priorities",
+                    "Consider model optimization",
+                ]
+            )
 
         return recommendations
 
@@ -185,7 +197,7 @@ class CostEstimator:
     MODEL_COSTS: ClassVar[dict[str, float]] = {
         "gpt-4-turbo": 0.01,
         "gpt-3.5-turbo": 0.002,
-        "gpt-3.5-turbo-instruct": 0.0015
+        "gpt-3.5-turbo-instruct": 0.0015,
     }
 
     # Average tokens per interaction by role level
@@ -195,15 +207,12 @@ class CostEstimator:
         RoleLevel.DIRECTOR: 1000,
         RoleLevel.MANAGER: 800,
         RoleLevel.IC: 500,
-        RoleLevel.EXTERNAL: 600
+        RoleLevel.EXTERNAL: 600,
     }
 
     @classmethod
     def estimate_task_cost(
-        cls,
-        role_level: RoleLevel,
-        model: str,
-        num_interactions: int = 1
+        cls, role_level: RoleLevel, model: str, num_interactions: int = 1
     ) -> float:
         """Estimate cost for a task"""
 
@@ -245,7 +254,7 @@ class CostEstimator:
             "code_reader": 0.01,
             "data_tool": 0.03,
             "writer": 0.01,
-            "qa_tool": 0.02
+            "qa_tool": 0.02,
         }
 
         cost_per_use = tool_costs.get(tool_id, 0.01)
@@ -260,10 +269,7 @@ class CFO:
         self.cost_estimator = CostEstimator()
 
     def evaluate_spend_request(
-        self,
-        amount: float,
-        purpose: str,
-        priority: str = "medium"
+        self, amount: float, purpose: str, priority: str = "medium"
     ) -> dict[str, Any]:
         """Evaluate a spending request"""
 
@@ -278,13 +284,13 @@ class CFO:
             reason = "Would exceed hard budget cap"
         elif alert_level == BudgetAlert.EMERGENCY:
             reason = "Emergency budget state - only critical spending allowed"
-            approved = (priority == "critical")
+            approved = priority == "critical"
         elif alert_level == BudgetAlert.EXCEEDED_SOFT:
             reason = "Soft cap exceeded - high priority only"
-            approved = (priority in ["critical", "high"])
+            approved = priority in ["critical", "high"]
         elif alert_level == BudgetAlert.CRITICAL:
             reason = "Near soft cap - reviewing carefully"
-            approved = (priority != "low")
+            approved = priority != "low"
         else:
             approved = True
             reason = "Within budget parameters"
@@ -296,7 +302,7 @@ class CFO:
             "purpose": purpose,
             "priority": priority,
             "remaining_budget": self.budget_manager.get_remaining(),
-            "recommendations": self.budget_manager.get_recommendations() if not approved else []
+            "recommendations": self.budget_manager.get_recommendations() if not approved else [],
         }
 
     def generate_budget_patch(self) -> dict[str, Any]:
@@ -306,17 +312,13 @@ class CFO:
 
         if alert_level in [BudgetAlert.EMERGENCY, BudgetAlert.EXCEEDED_SOFT, BudgetAlert.CRITICAL]:
             # Switch to conservative policy when approaching or exceeding soft cap
-            return {
-                "op": "replace",
-                "path": "/budget/policy",
-                "value": "conservative"
-            }
+            return {"op": "replace", "path": "/budget/policy", "value": "conservative"}
         elif alert_level == BudgetAlert.WARNING:
             # Adjust forecast at warning level
             return {
                 "op": "replace",
                 "path": "/budget/forecast_cost_usd",
-                "value": self.budget_manager.spent * 1.2  # 20% buffer
+                "value": self.budget_manager.spent * 1.2,  # 20% buffer
             }
 
         return None

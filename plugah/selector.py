@@ -17,10 +17,7 @@ class Selector:
         self.tool_selector = ToolSelector()
 
     def select_specialization(
-        self,
-        role: str,
-        domain: str | None,
-        task_description: str
+        self, role: str, domain: str | None, task_description: str
     ) -> str | None:
         """Select appropriate specialization for a role"""
 
@@ -47,11 +44,7 @@ class Selector:
         return None
 
     def select_tools(
-        self,
-        role: str,
-        specialization: str | None,
-        task_description: str,
-        available_budget: float
+        self, role: str, specialization: str | None, task_description: str, available_budget: float
     ) -> list[ToolRef]:
         """Select tools for an agent"""
 
@@ -62,7 +55,7 @@ class Selector:
             role=lookup_role,
             task_description=task_description,
             budget_policy=self.budget_policy,
-            available_budget=available_budget
+            available_budget=available_budget,
         )
 
         # Convert to ToolRef objects
@@ -73,17 +66,13 @@ class Selector:
 
         return tools
 
-    def select_model(
-        self,
-        role_level: RoleLevel,
-        task_complexity: str = "medium"
-    ) -> str:
+    def select_model(self, role_level: RoleLevel, task_complexity: str = "medium") -> str:
         """Select appropriate LLM model"""
 
         return self.tool_selector.select_model(
             role_level=role_level.value,
             budget_policy=self.budget_policy,
-            task_complexity=task_complexity
+            task_complexity=task_complexity,
         )
 
     def compose_system_prompt(
@@ -93,7 +82,7 @@ class Selector:
         project_title: str,
         domain: str | None,
         specialization: str | None,
-        context: dict[str, Any]
+        context: dict[str, Any],
     ) -> str:
         """Compose full system prompt for an agent"""
 
@@ -103,14 +92,11 @@ class Selector:
             project_title=project_title,
             domain=domain,
             specialization=specialization,
-            context=context
+            context=context,
         )
 
     def determine_staffing_level(
-        self,
-        scope_size: str,
-        budget: float,
-        domain: str | None
+        self, scope_size: str, budget: float, domain: str | None
     ) -> dict[str, int]:
         """Determine how many of each role type to hire"""
 
@@ -120,7 +106,7 @@ class Selector:
                 "vps": 1,  # Just VP Eng
                 "directors": 1,
                 "managers": 1,
-                "ics": 2
+                "ics": 2,
             }
         elif self.budget_policy == "aggressive":
             # Full staffing
@@ -128,31 +114,16 @@ class Selector:
                 "vps": 3,  # VP Eng, VP Product, VP Data
                 "directors": 4,
                 "managers": 6,
-                "ics": 12
+                "ics": 12,
             }
         else:  # balanced
             # Moderate staffing based on budget
             if budget < 50:
-                return {
-                    "vps": 1,
-                    "directors": 2,
-                    "managers": 2,
-                    "ics": 4
-                }
+                return {"vps": 1, "directors": 2, "managers": 2, "ics": 4}
             elif budget < 200:
-                return {
-                    "vps": 2,
-                    "directors": 3,
-                    "managers": 4,
-                    "ics": 8
-                }
+                return {"vps": 2, "directors": 3, "managers": 4, "ics": 8}
             else:
-                return {
-                    "vps": 3,
-                    "directors": 4,
-                    "managers": 5,
-                    "ics": 10
-                }
+                return {"vps": 3, "directors": 4, "managers": 5, "ics": 10}
 
     def estimate_role_cost(self, role_level: RoleLevel) -> float:
         """Estimate cost per task for a role level"""
@@ -164,7 +135,7 @@ class Selector:
             RoleLevel.DIRECTOR: 0.3,
             RoleLevel.MANAGER: 0.2,
             RoleLevel.IC: 0.1,
-            RoleLevel.EXTERNAL: 0.15
+            RoleLevel.EXTERNAL: 0.15,
         }
 
         base_cost = level_costs.get(role_level, 0.1)

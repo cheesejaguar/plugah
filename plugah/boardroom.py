@@ -26,10 +26,7 @@ class Startup:
         self.prd: dict[str, Any] = {}
 
     async def run(
-        self,
-        problem: str,
-        budget_usd: float,
-        context: dict[str, Any] | None = None
+        self, problem: str, budget_usd: float, context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
         Run startup discovery phase
@@ -44,17 +41,10 @@ class Startup:
         self.discovery_questions = await self._generate_questions(problem, context)
 
         # Return questions for user to answer (in demo, we'll simulate)
-        return {
-            "questions": self.discovery_questions,
-            "problem": problem,
-            "budget": budget_usd
-        }
+        return {"questions": self.discovery_questions, "problem": problem, "budget": budget_usd}
 
     async def process_answers(
-        self,
-        answers: list[str],
-        problem: str,
-        budget_usd: float
+        self, answers: list[str], problem: str, budget_usd: float
     ) -> dict[str, Any]:
         """Process discovery answers and generate PRD"""
 
@@ -65,11 +55,7 @@ class Startup:
 
         return self.prd
 
-    async def _generate_questions(
-        self,
-        problem: str,
-        context: dict[str, Any]
-    ) -> list[str]:
+    async def _generate_questions(self, problem: str, context: dict[str, Any]) -> list[str]:
         """Generate discovery questions"""
 
         # For demo, return pre-defined questions
@@ -83,16 +69,13 @@ class Startup:
             "Are there any existing systems or data sources to integrate with?",
             "What are the primary risks or challenges you foresee?",
             "What should explicitly NOT be included in this project (non-goals)?",
-            "How will you measure the success of this project post-launch?"
+            "How will you measure the success of this project post-launch?",
         ]
 
         return questions[:5]  # Return top 5 questions
 
     async def _generate_prd(
-        self,
-        problem: str,
-        answers: list[str],
-        budget_usd: float
+        self, problem: str, answers: list[str], budget_usd: float
     ) -> dict[str, Any]:
         """Generate PRD from problem and discovery answers"""
 
@@ -105,14 +88,16 @@ class Startup:
             "budget": budget_usd,
             "domain": self._infer_domain(problem),
             "users": answers[0] if len(answers) > 0 else "General users",
-            "success_criteria": self._parse_success_criteria(answers[1] if len(answers) > 1 else ""),
+            "success_criteria": self._parse_success_criteria(
+                answers[1] if len(answers) > 1 else ""
+            ),
             "constraints": self._parse_constraints(answers[2] if len(answers) > 2 else ""),
             "timeline": answers[3] if len(answers) > 3 else "ASAP",
             "integrations": answers[4] if len(answers) > 4 else "None",
             "objectives": self._generate_objectives(problem, answers),
             "key_results": self._generate_key_results(problem),
             "non_goals": [],
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }
 
         return prd
@@ -183,18 +168,18 @@ class Startup:
             {
                 "id": "obj_1",
                 "title": "Deliver Core Functionality",
-                "description": f"Implement the core solution for: {problem[:100]}"
+                "description": f"Implement the core solution for: {problem[:100]}",
             },
             {
                 "id": "obj_2",
                 "title": "Ensure Quality",
-                "description": "Meet quality standards and pass all tests"
+                "description": "Meet quality standards and pass all tests",
             },
             {
                 "id": "obj_3",
                 "title": "Document and Deploy",
-                "description": "Provide documentation and deploy to production"
-            }
+                "description": "Provide documentation and deploy to production",
+            },
         ]
 
         return objectives
@@ -209,7 +194,7 @@ class Startup:
                 "metric": "Feature Completion",
                 "target": 100,
                 "current": 0,
-                "unit": "%"
+                "unit": "%",
             },
             {
                 "id": "kr_2",
@@ -217,7 +202,7 @@ class Startup:
                 "metric": "Test Coverage",
                 "target": 80,
                 "current": 0,
-                "unit": "%"
+                "unit": "%",
             },
             {
                 "id": "kr_3",
@@ -225,19 +210,15 @@ class Startup:
                 "metric": "Deployment Success",
                 "target": 1,
                 "current": 0,
-                "unit": "boolean"
-            }
+                "unit": "boolean",
+            },
         ]
 
 
 class BoardRoom:
     """Main orchestrator with C-suite oversight"""
 
-    def __init__(
-        self,
-        project_id: str | None = None,
-        audit_logger: AuditLogger | None = None
-    ):
+    def __init__(self, project_id: str | None = None, audit_logger: AuditLogger | None = None):
         self.project_id = project_id or str(uuid.uuid4())
         self.audit_logger = audit_logger or AuditLogger(self.project_id)
         self.startup = Startup()
@@ -263,17 +244,11 @@ class BoardRoom:
                 print(f"Callback error: {e}")
 
     async def startup_phase(
-        self,
-        problem: str,
-        budget_usd: float,
-        context: dict[str, Any] | None = None
+        self, problem: str, budget_usd: float, context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Run startup discovery phase"""
 
-        self._emit_event("startup_begin", {
-            "problem": problem,
-            "budget": budget_usd
-        })
+        self._emit_event("startup_begin", {"problem": problem, "budget": budget_usd})
 
         # Generate questions
         discovery = await self.startup.run(problem, budget_usd, context)
@@ -283,10 +258,7 @@ class BoardRoom:
         return discovery
 
     async def process_discovery(
-        self,
-        answers: list[str],
-        problem: str,
-        budget_usd: float
+        self, answers: list[str], problem: str, budget_usd: float
     ) -> dict[str, Any]:
         """Process discovery answers and generate PRD"""
 
@@ -299,11 +271,7 @@ class BoardRoom:
 
         return prd
 
-    async def plan_organization(
-        self,
-        prd: dict[str, Any],
-        budget_usd: float
-    ) -> OAG:
+    async def plan_organization(self, prd: dict[str, Any], budget_usd: float) -> OAG:
         """Plan the organizational structure"""
 
         self._emit_event("planning_begin", {"prd": prd["title"]})
@@ -325,16 +293,19 @@ class BoardRoom:
         # Initialize patch manager
         self.patch_manager = PatchManager(self.oag, self.audit_logger)
 
-        self._emit_event("planning_complete", {
-            "num_agents": len(self.oag.get_agents()),
-            "num_tasks": len(self.oag.get_tasks()),
-            "forecast_cost": self.oag.budget.forecast_cost_usd
-        })
+        self._emit_event(
+            "planning_complete",
+            {
+                "num_agents": len(self.oag.get_agents()),
+                "num_tasks": len(self.oag.get_tasks()),
+                "forecast_cost": self.oag.budget.forecast_cost_usd,
+            },
+        )
 
-        self.audit_logger.log_event("oag_created", {
-            "agents": len(self.oag.get_agents()),
-            "tasks": len(self.oag.get_tasks())
-        })
+        self.audit_logger.log_event(
+            "oag_created",
+            {"agents": len(self.oag.get_agents()), "tasks": len(self.oag.get_tasks())},
+        )
 
         return self.oag
 
@@ -344,18 +315,14 @@ class BoardRoom:
         if not self.oag:
             raise ValueError("No OAG to execute. Run plan_organization first.")
 
-        self._emit_event("execution_begin", {
-            "project_id": self.project_id
-        })
+        self._emit_event("execution_begin", {"project_id": self.project_id})
 
         # Create executor with settings
-        self.executor = Executor(
-            self.oag,
-            self.budget_manager
-        )
+        self.executor = Executor(self.oag, self.budget_manager)
 
         # Check for real execution mode from env
         import os
+
         if os.getenv("USE_REAL_EXECUTION", "false").lower() == "true":
             self.executor.use_real_execution = True
 
@@ -368,22 +335,28 @@ class BoardRoom:
         # Calculate final metrics
         final_metrics = self.metrics_engine.calculate_all()
 
-        self._emit_event("execution_complete", {
-            "results": len(results),
-            "total_cost": self.budget_manager.get_spent(),
-            "metrics": final_metrics
-        })
+        self._emit_event(
+            "execution_complete",
+            {
+                "results": len(results),
+                "total_cost": self.budget_manager.get_spent(),
+                "metrics": final_metrics,
+            },
+        )
 
-        self.audit_logger.log_event("execution_complete", {
-            "total_cost": self.budget_manager.get_spent(),
-            "tasks_completed": len([r for r in results.values() if r.status.value == "done"])
-        })
+        self.audit_logger.log_event(
+            "execution_complete",
+            {
+                "total_cost": self.budget_manager.get_spent(),
+                "tasks_completed": len([r for r in results.values() if r.status.value == "done"]),
+            },
+        )
 
         return {
             "results": results,
             "metrics": final_metrics,
             "total_cost": self.budget_manager.get_spent(),
-            "budget_remaining": self.budget_manager.get_remaining()
+            "budget_remaining": self.budget_manager.get_remaining(),
         }
 
     def _handle_execution_event(self, event: ExecutionEvent, data: dict[str, Any]):
@@ -411,10 +384,7 @@ class BoardRoom:
         patch = self.cfo.generate_budget_patch()
         if patch:
             self.patch_manager.apply_patch(patch)
-            self._emit_event("patch_applied", {
-                "patch": patch,
-                "reason": "Budget warning"
-            })
+            self._emit_event("patch_applied", {"patch": patch, "reason": "Budget warning"})
 
     def _update_metrics(self, data: dict[str, Any]):
         """Update metrics after task completion"""
@@ -440,10 +410,12 @@ class BoardRoom:
             "budget": {
                 "spent": self.budget_manager.get_spent() if self.budget_manager else 0,
                 "remaining": self.budget_manager.get_remaining() if self.budget_manager else 0,
-                "alert_level": self.budget_manager.get_alert_level().value if self.budget_manager else "normal"
+                "alert_level": self.budget_manager.get_alert_level().value
+                if self.budget_manager
+                else "normal",
             },
             "metrics": self.metrics_engine.get_current_metrics() if self.metrics_engine else {},
-            "execution_progress": self.executor.get_progress() if self.executor else {}
+            "execution_progress": self.executor.get_progress() if self.executor else {},
         }
 
         return status

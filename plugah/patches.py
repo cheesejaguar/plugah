@@ -44,6 +44,7 @@ class PatchManager:
 
             # Validate and update OAG
             from .oag_schema import validate_oag
+
             new_oag = validate_oag(patched_dict)
 
             # Update the OAG in place
@@ -66,12 +67,7 @@ class PatchManager:
             self._record_patch(patch_ops, success=False, error=str(e))
             return False
 
-    def _record_patch(
-        self,
-        patch_ops: list[dict],
-        success: bool,
-        error: str | None = None
-    ):
+    def _record_patch(self, patch_ops: list[dict], success: bool, error: str | None = None):
         """Record a patch in history"""
 
         patch_record = {
@@ -79,22 +75,20 @@ class PatchManager:
             "version": self.oag.meta.version,
             "patch": patch_ops,
             "success": success,
-            "error": error
+            "error": error,
         }
 
         self.patch_history.append(patch_record)
 
         if self.audit_logger:
-            self.audit_logger.log_event("patch_applied" if success else "patch_failed", patch_record)
+            self.audit_logger.log_event(
+                "patch_applied" if success else "patch_failed", patch_record
+            )
 
     def create_add_node_patch(self, node: Any) -> list[dict]:
         """Create a patch to add a node"""
 
-        return [{
-            "op": "add",
-            "path": f"/nodes/{node.id}",
-            "value": node.model_dump()
-        }]
+        return [{"op": "add", "path": f"/nodes/{node.id}", "value": node.model_dump()}]
 
     def create_remove_node_patch(self, node_id: str) -> list[dict]:
         """Create a patch to remove a node"""
@@ -102,29 +96,19 @@ class PatchManager:
         patches = []
 
         # Remove the node
-        patches.append({
-            "op": "remove",
-            "path": f"/nodes/{node_id}"
-        })
+        patches.append({"op": "remove", "path": f"/nodes/{node_id}"})
 
         # Remove edges connected to this node
         for i, edge in enumerate(self.oag.edges):
             if edge.from_id == node_id or edge.to_id == node_id:
-                patches.append({
-                    "op": "remove",
-                    "path": f"/edges/{i}"
-                })
+                patches.append({"op": "remove", "path": f"/edges/{i}"})
 
         return patches
 
     def create_update_budget_patch(self, new_policy: str) -> list[dict]:
         """Create a patch to update budget policy"""
 
-        return [{
-            "op": "replace",
-            "path": "/budget/policy",
-            "value": new_policy
-        }]
+        return [{"op": "replace", "path": "/budget/policy", "value": new_policy}]
 
     def create_downgrade_models_patch(self) -> list[dict]:
         """Create a patch to downgrade all models to economy tier"""
@@ -132,23 +116,17 @@ class PatchManager:
         patches = []
 
         for node_id, node in self.oag.nodes.items():
-            if hasattr(node, 'llm'):
-                patches.append({
-                    "op": "replace",
-                    "path": f"/nodes/{node_id}/llm",
-                    "value": "gpt-3.5-turbo"
-                })
+            if hasattr(node, "llm"):
+                patches.append(
+                    {"op": "replace", "path": f"/nodes/{node_id}/llm", "value": "gpt-3.5-turbo"}
+                )
 
         return patches
 
     def create_task_status_patch(self, task_id: str, new_status: str) -> list[dict]:
         """Create a patch to update task status"""
 
-        return [{
-            "op": "replace",
-            "path": f"/nodes/{task_id}/status",
-            "value": new_status
-        }]
+        return [{"op": "replace", "path": f"/nodes/{task_id}/status", "value": new_status}]
 
     def get_patch_history(self) -> list[dict[str, Any]]:
         """Get the patch history"""
@@ -157,7 +135,7 @@ class PatchManager:
     def export_patches(self, filepath: str):
         """Export patch history to file"""
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.patch_history, f, indent=2, default=str)
 
     def rollback_to_version(self, target_version: int) -> bool:
@@ -166,10 +144,10 @@ class PatchManager:
         # This would require storing full OAG snapshots
         # For now, just log the attempt
         if self.audit_logger:
-            self.audit_logger.log_event("rollback_attempted", {
-                "target_version": target_version,
-                "current_version": self.oag.meta.version
-            })
+            self.audit_logger.log_event(
+                "rollback_attempted",
+                {"target_version": target_version, "current_version": self.oag.meta.version},
+            )
 
         return False  # Not implemented
 
@@ -182,22 +160,10 @@ class PatchGenerator:
         """Generate patch based on budget alert level"""
 
         if budget_alert_level == "emergency":
-            return [
-                {
-                    "op": "replace",
-                    "path": "/budget/policy",
-                    "value": "conservative"
-                }
-            ]
+            return [{"op": "replace", "path": "/budget/policy", "value": "conservative"}]
         elif budget_alert_level == "critical":
             # Downgrade some models
-            return [
-                {
-                    "op": "replace",
-                    "path": "/budget/policy",
-                    "value": "balanced"
-                }
-            ]
+            return [{"op": "replace", "path": "/budget/policy", "value": "balanced"}]
 
         return None
 
@@ -208,10 +174,7 @@ class PatchGenerator:
         patches = []
 
         for task_id in tasks_to_remove:
-            patches.append({
-                "op": "remove",
-                "path": f"/nodes/{task_id}"
-            })
+            patches.append({"op": "remove", "path": f"/nodes/{task_id}"})
 
         return patches
 
@@ -223,16 +186,15 @@ class PatchGenerator:
 
         for agent_id in agents_to_remove:
             # Remove agent
-            patches.append({
-                "op": "remove",
-                "path": f"/nodes/{agent_id}"
-            })
+            patches.append({"op": "remove", "path": f"/nodes/{agent_id}"})
 
             # Reassign their tasks (simplified - would need more logic)
-            patches.append({
-                "op": "replace",
-                "path": "/meta/updated_at",
-                "value": datetime.utcnow().isoformat()
-            })
+            patches.append(
+                {
+                    "op": "replace",
+                    "path": "/meta/updated_at",
+                    "value": datetime.utcnow().isoformat(),
+                }
+            )
 
         return patches

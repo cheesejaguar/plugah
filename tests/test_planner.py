@@ -18,7 +18,7 @@ def test_planner_creates_board_room():
             {"id": "obj1", "title": "Build MVP", "description": "Create minimum viable product"}
         ],
         "constraints": ["Must be scalable"],
-        "success_criteria": ["Works correctly", "Good performance"]
+        "success_criteria": ["Works correctly", "Good performance"],
     }
 
     oag = planner.plan(prd, budget_usd=100.0)
@@ -46,11 +46,9 @@ def test_planner_creates_tasks():
     prd = {
         "title": "Test Project",
         "domain": "api",
-        "objectives": [
-            {"id": "obj1", "title": "Build API", "description": "Create REST API"}
-        ],
+        "objectives": [{"id": "obj1", "title": "Build API", "description": "Create REST API"}],
         "constraints": [],
-        "success_criteria": ["API works"]
+        "success_criteria": ["API works"],
     }
 
     oag = planner.plan(prd, budget_usd=50.0)
@@ -74,11 +72,9 @@ def test_planner_creates_edges():
     prd = {
         "title": "Test Project",
         "domain": "data",
-        "objectives": [
-            {"id": "obj1", "title": "Process Data", "description": "ETL pipeline"}
-        ],
+        "objectives": [{"id": "obj1", "title": "Process Data", "description": "ETL pipeline"}],
         "constraints": [],
-        "success_criteria": []
+        "success_criteria": [],
     }
 
     oag = planner.plan(prd, budget_usd=200.0)
@@ -104,7 +100,7 @@ def test_budget_policy_selection():
         "domain": "web",
         "objectives": [{"id": "obj1", "title": "Simple task"}],
         "constraints": [],
-        "success_criteria": []
+        "success_criteria": [],
     }
 
     oag_small = planner.plan(prd_small, budget_usd=15.0)
@@ -114,12 +110,9 @@ def test_budget_policy_selection():
     prd_large = {
         "title": "Large Project",
         "domain": "web",
-        "objectives": [
-            {"id": "obj1", "title": "Task 1"},
-            {"id": "obj2", "title": "Task 2"}
-        ],
+        "objectives": [{"id": "obj1", "title": "Task 1"}, {"id": "obj2", "title": "Task 2"}],
         "constraints": [],
-        "success_criteria": []
+        "success_criteria": [],
     }
 
     oag_large = planner.plan(prd_large, budget_usd=500.0)
@@ -136,7 +129,7 @@ def test_staffing_levels():
         "domain": "web",
         "objectives": [{"id": "obj1", "title": "Build site"}],
         "constraints": [],
-        "success_criteria": []
+        "success_criteria": [],
     }
 
     # Small budget = fewer staff

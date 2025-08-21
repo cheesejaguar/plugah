@@ -2,7 +2,6 @@
 Code analysis tool stubs
 """
 
-
 from crewai_tools import BaseTool
 
 

@@ -2,7 +2,6 @@
 Writing and documentation tool stubs
 """
 
-
 from crewai_tools import BaseTool
 
 
@@ -12,12 +11,7 @@ class WriterTool(BaseTool):
     name: str = "writer"
     description: str = "Generate written content and documentation"
 
-    def _run(
-        self,
-        content_type: str,
-        topic: str,
-        context: str | None = None
-    ) -> str:
+    def _run(self, content_type: str, topic: str, context: str | None = None) -> str:
         """Generate written content"""
 
         # Stub implementation
@@ -25,17 +19,12 @@ class WriterTool(BaseTool):
             "documentation": f"# Documentation for {topic}\n\n## Overview\n{context or 'Generated documentation'}",
             "brief": f"**Brief: {topic}**\n\nExecutive Summary:\n{context or 'Generated brief'}",
             "outline": f"## Outline: {topic}\n\n1. Introduction\n2. Main Points\n3. Conclusion",
-            "report": f"# Report: {topic}\n\n{context or 'Generated report content'}"
+            "report": f"# Report: {topic}\n\n{context or 'Generated report content'}",
         }
 
         return templates.get(content_type, f"Generated {content_type} for {topic}")
 
-    async def _arun(
-        self,
-        content_type: str,
-        topic: str,
-        context: str | None = None
-    ) -> str:
+    async def _arun(self, content_type: str, topic: str, context: str | None = None) -> str:
         """Async content generation"""
         return self._run(content_type, topic, context)
 

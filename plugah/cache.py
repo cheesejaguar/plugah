@@ -19,11 +19,11 @@ class CacheManager:
 
         # TTL in seconds for different cache types
         self.ttl_config = {
-            "tool_research": 3600,      # 1 hour for research
-            "tool_code": 300,            # 5 minutes for code generation
-            "tool_data": 1800,           # 30 minutes for data operations
-            "agent_response": 600,       # 10 minutes for agent responses
-            "default": 900               # 15 minutes default
+            "tool_research": 3600,  # 1 hour for research
+            "tool_code": 300,  # 5 minutes for code generation
+            "tool_data": 1800,  # 30 minutes for data operations
+            "agent_response": 600,  # 10 minutes for agent responses
+            "default": 900,  # 15 minutes default
         }
 
     def _get_cache_key(self, category: str, data: dict) -> str:
@@ -46,7 +46,7 @@ class CacheManager:
             return None
 
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 cached_data = pickle.load(f)
 
             # Check TTL
@@ -68,15 +68,10 @@ class CacheManager:
         cache_key = self._get_cache_key(category, data)
         cache_path = self._get_cache_path(cache_key)
 
-        cache_data = {
-            "timestamp": time.time(),
-            "category": category,
-            "input": data,
-            "value": value
-        }
+        cache_data = {"timestamp": time.time(), "category": category, "input": data, "value": value}
 
         try:
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(cache_data, f)
         except Exception:
             # Failed to cache, not critical
@@ -94,11 +89,7 @@ class CacheManager:
 
     def get_stats(self) -> dict:
         """Get cache statistics"""
-        stats = {
-            "total_entries": 0,
-            "total_size_bytes": 0,
-            "by_category": {}
-        }
+        stats = {"total_entries": 0, "total_size_bytes": 0, "by_category": {}}
 
         for cache_file in self.cache_dir.glob("*.cache"):
             stats["total_entries"] += 1
@@ -120,6 +111,7 @@ class RedisCache:
     def __init__(self, redis_url: str = "redis://localhost:6379"):
         try:
             import redis
+
             self.client = redis.from_url(redis_url)
             self.enabled = True
         except ImportError:
@@ -154,7 +146,7 @@ class RedisCache:
                 "tool_research": 3600,
                 "tool_code": 300,
                 "tool_data": 1800,
-                "agent_response": 600
+                "agent_response": 600,
             }.get(category, 900)
 
         try:

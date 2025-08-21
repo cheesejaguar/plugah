@@ -38,7 +38,7 @@ class ExecutionResult:
         output: Any = None,
         error: str | None = None,
         cost: float = 0.0,
-        duration: float = 0.0
+        duration: float = 0.0,
     ):
         self.task_id = task_id
         self.status = status
@@ -55,7 +55,7 @@ class Executor:
         self,
         oag: OAG,
         budget_manager: BudgetManager | None = None,
-        materializer: Materializer | None = None
+        materializer: Materializer | None = None,
     ):
         self.oag = oag
         self.budget_manager = budget_manager or BudgetManager(oag.budget)
@@ -98,11 +98,14 @@ class Executor:
 
         # Check initial budget
         if not self.budget_manager.can_proceed():
-            self._emit_event(ExecutionEvent.BUDGET_EXCEEDED, {
-                "message": "Budget exceeded before execution",
-                "spent": self.budget_manager.get_spent(),
-                "limit": self.budget_manager.budget.caps.hard_cap_usd
-            })
+            self._emit_event(
+                ExecutionEvent.BUDGET_EXCEEDED,
+                {
+                    "message": "Budget exceeded before execution",
+                    "spent": self.budget_manager.get_spent(),
+                    "limit": self.budget_manager.budget.caps.hard_cap_usd,
+                },
+            )
             return {}
 
         # Execute in waves
@@ -146,9 +149,7 @@ class Executor:
             # Check if dependencies are satisfied
             if not self._dependencies_satisfied(task_id):
                 result = ExecutionResult(
-                    task_id=task_id,
-                    status=TaskStatus.SKIPPED,
-                    error="Dependencies not satisfied"
+                    task_id=task_id, status=TaskStatus.SKIPPED, error="Dependencies not satisfied"
                 )
                 self.results[task_id] = result
                 continue
@@ -173,10 +174,7 @@ class Executor:
                 break
 
             # Execute ready tasks in parallel
-            coroutines = [
-                self._execute_task(task_id, tasks[task_id])
-                for task_id in ready_tasks
-            ]
+            coroutines = [self._execute_task(task_id, tasks[task_id]) for task_id in ready_tasks]
 
             await asyncio.gather(*coroutines)
 
@@ -208,25 +206,26 @@ class Executor:
 
         # Check budget before execution
         if not self.budget_manager.can_proceed():
-            self._emit_event(ExecutionEvent.BUDGET_EXCEEDED, {
-                "task_id": task_id,
-                "spent": self.budget_manager.get_spent()
-            })
+            self._emit_event(
+                ExecutionEvent.BUDGET_EXCEEDED,
+                {"task_id": task_id, "spent": self.budget_manager.get_spent()},
+            )
 
             result = ExecutionResult(
-                task_id=task_id,
-                status=TaskStatus.FAILED,
-                error="Budget exceeded"
+                task_id=task_id, status=TaskStatus.FAILED, error="Budget exceeded"
             )
             self.results[task_id] = result
             return
 
         # Emit start event
-        self._emit_event(ExecutionEvent.TASK_START, {
-            "task_id": task_id,
-            "description": task_spec.description,
-            "agent_id": task_spec.agent_id
-        })
+        self._emit_event(
+            ExecutionEvent.TASK_START,
+            {
+                "task_id": task_id,
+                "description": task_spec.description,
+                "agent_id": task_spec.agent_id,
+            },
+        )
 
         # Update task status
         task_spec.status = TaskStatus.RUNNING
@@ -245,7 +244,7 @@ class Executor:
                 await asyncio.sleep(0.5)  # Simulate work
                 output = {
                     "result": f"Completed {task_spec.description}",
-                    "artifacts": {"data": "sample"}
+                    "artifacts": {"data": "sample"},
                 }
                 cost = task_spec.cost.est_cost_usd
 
@@ -254,11 +253,14 @@ class Executor:
 
             # Check for budget warnings
             if self.budget_manager.is_near_soft_cap():
-                self._emit_event(ExecutionEvent.BUDGET_WARNING, {
-                    "task_id": task_id,
-                    "spent": self.budget_manager.get_spent(),
-                    "soft_cap": self.budget_manager.budget.caps.soft_cap_usd
-                })
+                self._emit_event(
+                    ExecutionEvent.BUDGET_WARNING,
+                    {
+                        "task_id": task_id,
+                        "spent": self.budget_manager.get_spent(),
+                        "soft_cap": self.budget_manager.budget.caps.soft_cap_usd,
+                    },
+                )
 
             # Update task
             task_spec.status = TaskStatus.DONE
@@ -271,16 +273,14 @@ class Executor:
                 status=TaskStatus.DONE,
                 output=output,
                 cost=cost,
-                duration=time.time() - start_time
+                duration=time.time() - start_time,
             )
 
             # Emit complete event
-            self._emit_event(ExecutionEvent.TASK_COMPLETE, {
-                "task_id": task_id,
-                "output": output,
-                "cost": cost,
-                "duration": result.duration
-            })
+            self._emit_event(
+                ExecutionEvent.TASK_COMPLETE,
+                {"task_id": task_id, "output": output, "cost": cost, "duration": result.duration},
+            )
 
         except Exception as e:
             # Task failed
@@ -290,13 +290,10 @@ class Executor:
                 task_id=task_id,
                 status=TaskStatus.FAILED,
                 error=str(e),
-                duration=time.time() - start_time
+                duration=time.time() - start_time,
             )
 
-            self._emit_event(ExecutionEvent.TASK_FAILED, {
-                "task_id": task_id,
-                "error": str(e)
-            })
+            self._emit_event(ExecutionEvent.TASK_FAILED, {"task_id": task_id, "error": str(e)})
 
         self.results[task_id] = result
 
@@ -307,7 +304,7 @@ class Executor:
         cache_key = {
             "task_id": task_id,
             "description": task.description,
-            "expected_output": task.expected_output
+            "expected_output": task.expected_output,
         }
 
         cached_result = self.cache.get("agent_response", cache_key)
@@ -324,29 +321,19 @@ class Executor:
 
             # Create a mini crew for this single task
             from crewai import Crew
-            mini_crew = Crew(
-                agents=[agent],
-                tasks=[task],
-                verbose=False,
-                process="sequential"
-            )
+
+            mini_crew = Crew(agents=[agent], tasks=[task], verbose=False, process="sequential")
 
             # Execute synchronously (CrewAI doesn't support async yet)
             result = await asyncio.to_thread(mini_crew.kickoff)
 
             # Parse result
             if isinstance(result, str):
-                output = {
-                    "result": result,
-                    "artifacts": {}
-                }
+                output = {"result": result, "artifacts": {}}
             elif isinstance(result, dict):
                 output = result
             else:
-                output = {
-                    "result": str(result),
-                    "artifacts": {}
-                }
+                output = {"result": str(result), "artifacts": {}}
 
             # Cache the successful result
             self.cache.set("agent_response", cache_key, output)
@@ -357,7 +344,7 @@ class Executor:
             # Fallback to mock if CrewAI fails
             fallback = {
                 "result": f"Task {task_id} completed (CrewAI error: {e!s})",
-                "artifacts": {"error": str(e)}
+                "artifacts": {"error": str(e)},
             }
             # Don't cache errors
             return fallback
@@ -366,14 +353,8 @@ class Executor:
         """Get execution progress"""
 
         total_tasks = len(self.oag.get_tasks())
-        completed_tasks = sum(
-            1 for r in self.results.values()
-            if r.status == TaskStatus.DONE
-        )
-        failed_tasks = sum(
-            1 for r in self.results.values()
-            if r.status == TaskStatus.FAILED
-        )
+        completed_tasks = sum(1 for r in self.results.values() if r.status == TaskStatus.DONE)
+        failed_tasks = sum(1 for r in self.results.values() if r.status == TaskStatus.FAILED)
 
         return {
             "total": total_tasks,
@@ -382,7 +363,7 @@ class Executor:
             "in_progress": total_tasks - completed_tasks - failed_tasks,
             "completion_rate": (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0,
             "total_cost": sum(r.cost for r in self.results.values()),
-            "budget_remaining": self.budget_manager.get_remaining()
+            "budget_remaining": self.budget_manager.get_remaining(),
         }
 
 

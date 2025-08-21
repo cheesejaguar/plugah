@@ -19,9 +19,7 @@ class Materializer:
         self.cache_manager = get_cache()
 
     def materialize(
-        self,
-        oag: OAG,
-        llm_provider: str | None = None
+        self, oag: OAG, llm_provider: str | None = None
     ) -> tuple[dict[str, Agent], dict[str, Task], dict[str, Any]]:
         """
         Materialize an OAG into CrewAI agents and tasks
@@ -40,11 +38,7 @@ class Materializer:
         for agent_id, agent_spec in oag.get_agents().items():
             agent = self._materialize_agent(agent_spec, llm_provider)
             agents[agent_id] = agent
-            id_map[agent_id] = {
-                "type": "agent",
-                "crewai_obj": agent,
-                "spec": agent_spec
-            }
+            id_map[agent_id] = {"type": "agent", "crewai_obj": agent, "spec": agent_spec}
 
         # Materialize tasks
         for task_id, task_spec in oag.get_tasks().items():
@@ -57,19 +51,11 @@ class Materializer:
 
             task = self._materialize_task(task_spec, agent, oag)
             tasks[task_id] = task
-            id_map[task_id] = {
-                "type": "task",
-                "crewai_obj": task,
-                "spec": task_spec
-            }
+            id_map[task_id] = {"type": "task", "crewai_obj": task, "spec": task_spec}
 
         return agents, tasks, id_map
 
-    def _materialize_agent(
-        self,
-        spec: AgentSpec,
-        llm_provider: str | None = None
-    ) -> Agent:
+    def _materialize_agent(self, spec: AgentSpec, llm_provider: str | None = None) -> Agent:
         """Convert AgentSpec to CrewAI Agent"""
 
         # Load tools
@@ -86,6 +72,7 @@ class Materializer:
 
         # Get LLM config from environment
         import os
+
         llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-3.5-turbo")
 
         # Create agent
@@ -98,17 +85,12 @@ class Materializer:
             max_iter=5,
             verbose=True,
             allow_delegation=(spec.level.value in ["C_SUITE", "VP", "DIRECTOR"]),
-            system_template=spec.system_prompt
+            system_template=spec.system_prompt,
         )
 
         return agent
 
-    def _materialize_task(
-        self,
-        spec: TaskSpec,
-        agent: Agent,
-        oag: OAG
-    ) -> Task:
+    def _materialize_task(self, spec: TaskSpec, agent: Agent, oag: OAG) -> Task:
         """Convert TaskSpec to CrewAI Task"""
 
         # Build context from dependencies
@@ -123,7 +105,7 @@ class Materializer:
             expected_output=spec.expected_output,
             agent=agent,
             context=context_tasks,
-            output_file=f".runs/{oag.meta.project_id}/{spec.id}/output.json"
+            output_file=f".runs/{oag.meta.project_id}/{spec.id}/output.json",
         )
 
         return task
@@ -152,11 +134,7 @@ class Materializer:
 
             def _run(self, *args, **kwargs):
                 # Check cache first
-                cache_data = {
-                    "tool": tool_id,
-                    "args": args,
-                    "kwargs": kwargs
-                }
+                cache_data = {"tool": tool_id, "args": args, "kwargs": kwargs}
 
                 cached_result = cache_manager.get(f"tool_{tool_id}", cache_data)
                 if cached_result is not None:
@@ -184,15 +162,15 @@ class Materializer:
             tools=[],
             llm="gpt-3.5-turbo",
             max_iter=3,
-            verbose=True
+            verbose=True,
         )
 
     def _extract_goal_from_prompt(self, system_prompt: str) -> str:
         """Extract a goal from the system prompt"""
 
-        lines = system_prompt.split('\n')
+        lines = system_prompt.split("\n")
         for line in lines:
-            if 'responsibility' in line.lower() or 'must' in line.lower():
+            if "responsibility" in line.lower() or "must" in line.lower():
                 return line.strip()
 
         return "Achieve project objectives"
@@ -243,11 +221,7 @@ class CrewBuilder:
     """Build CrewAI Crew from materialized components"""
 
     @staticmethod
-    def build_crew(
-        agents: dict[str, Agent],
-        tasks: dict[str, Task],
-        oag: OAG
-    ) -> Crew:
+    def build_crew(agents: dict[str, Agent], tasks: dict[str, Task], oag: OAG) -> Crew:
         """Build a CrewAI Crew from agents and tasks"""
 
         # Order tasks by dependencies
@@ -260,7 +234,7 @@ class CrewBuilder:
             agents=unique_agents,
             tasks=ordered_tasks,
             verbose=2,
-            process="sequential"  # Could be "hierarchical" for complex orgs
+            process="sequential",  # Could be "hierarchical" for complex orgs
         )
 
         return crew

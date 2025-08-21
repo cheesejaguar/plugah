@@ -44,54 +44,43 @@ class AuditLogger:
         (self.run_dir / "patches").mkdir(exist_ok=True)
         (self.run_dir / "metrics").mkdir(exist_ok=True)
 
-    def log_event(
-        self,
-        event_type: str,
-        data: dict[str, Any],
-        level: str = "info"
-    ):
+    def log_event(self, event_type: str, data: dict[str, Any], level: str = "info"):
         """Log an event"""
 
         event = {
             "timestamp": datetime.utcnow().isoformat(),
             "type": event_type,
             "level": level,
-            "data": data
+            "data": data,
         }
 
         self.events.append(event)
 
         # Write to event log file
         log_file = self.run_dir / "logs" / "events.jsonl"
-        with open(log_file, 'a') as f:
-            f.write(json.dumps(event, default=str) + '\n')
+        with open(log_file, "a") as f:
+            f.write(json.dumps(event, default=str) + "\n")
 
-    def save_artifact(
-        self,
-        artifact_name: str,
-        content: Any,
-        artifact_type: str = "json"
-    ):
+    def save_artifact(self, artifact_name: str, content: Any, artifact_type: str = "json"):
         """Save an artifact"""
 
         artifact_path = self.run_dir / "artifacts" / artifact_name
 
         if artifact_type == "json":
-            with open(f"{artifact_path}.json", 'w') as f:
+            with open(f"{artifact_path}.json", "w") as f:
                 json.dump(content, f, indent=2, default=str)
         elif artifact_type == "text":
-            with open(f"{artifact_path}.txt", 'w') as f:
+            with open(f"{artifact_path}.txt", "w") as f:
                 f.write(str(content))
         else:
             # Binary or other
-            with open(artifact_path, 'wb') as f:
+            with open(artifact_path, "wb") as f:
                 f.write(content)
 
-        self.log_event("artifact_saved", {
-            "name": artifact_name,
-            "type": artifact_type,
-            "path": str(artifact_path)
-        })
+        self.log_event(
+            "artifact_saved",
+            {"name": artifact_name, "type": artifact_type, "path": str(artifact_path)},
+        )
 
     def save_oag(self, oag: Any, version: int | None = None):
         """Save OAG snapshot"""
@@ -111,14 +100,14 @@ class AuditLogger:
         filename = f"metrics_{timestamp}"
 
         metrics_path = self.run_dir / "metrics" / f"{filename}.json"
-        with open(metrics_path, 'w') as f:
+        with open(metrics_path, "w") as f:
             json.dump(metrics, f, indent=2, default=str)
 
     def save_patch(self, patch: dict[str, Any], patch_num: int):
         """Save a patch"""
 
         patch_path = self.run_dir / "patches" / f"patch_{patch_num:04d}.json"
-        with open(patch_path, 'w') as f:
+        with open(patch_path, "w") as f:
             json.dump(patch, f, indent=2, default=str)
 
     def get_timeline(self) -> list[dict[str, Any]]:
@@ -131,11 +120,13 @@ class AuditLogger:
         timeline = []
         for event in sorted_events:
             if event["type"] in ["startup", "planning", "execution", "completion"]:
-                timeline.append({
-                    "timestamp": event["timestamp"],
-                    "event": event["type"],
-                    "summary": self._summarize_event(event)
-                })
+                timeline.append(
+                    {
+                        "timestamp": event["timestamp"],
+                        "event": event["type"],
+                        "summary": self._summarize_event(event),
+                    }
+                )
 
         return timeline
 
@@ -166,7 +157,7 @@ class AuditLogger:
             "statistics": self._calculate_statistics(),
             "artifacts": self._list_artifacts(),
             "patches_applied": self._count_patches(),
-            "final_status": self._get_final_status()
+            "final_status": self._get_final_status(),
         }
 
         # Save the report
@@ -181,7 +172,7 @@ class AuditLogger:
             "total_events": len(self.events),
             "errors": sum(1 for e in self.events if e.get("level") == "error"),
             "patches": sum(1 for e in self.events if "patch" in e.get("type", "")),
-            "budget_alerts": sum(1 for e in self.events if "budget" in e.get("type", ""))
+            "budget_alerts": sum(1 for e in self.events if "budget" in e.get("type", "")),
         }
 
         # Calculate duration if we have start and end
@@ -227,12 +218,17 @@ class AuditLogger:
         if not output_path:
             output_path = self.run_dir / "full_log.json"
 
-        with open(output_path, 'w') as f:
-            json.dump({
-                "project_id": self.project_id,
-                "events": self.events,
-                "summary": self.generate_summary_report()
-            }, f, indent=2, default=str)
+        with open(output_path, "w") as f:
+            json.dump(
+                {
+                    "project_id": self.project_id,
+                    "events": self.events,
+                    "summary": self.generate_summary_report(),
+                },
+                f,
+                indent=2,
+                default=str,
+            )
 
     def cleanup_old_runs(self, keep_last: int = 10):
         """Clean up old run directories"""
@@ -244,7 +240,7 @@ class AuditLogger:
         run_dirs = sorted(
             [d for d in self.base_dir.iterdir() if d.is_dir()],
             key=lambda x: x.stat().st_mtime,
-            reverse=True
+            reverse=True,
         )
 
         # Keep the specified number of recent runs

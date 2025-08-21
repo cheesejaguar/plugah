@@ -89,7 +89,7 @@ class MetricsEngine:
         rollups = {
             "by_level": defaultdict(lambda: {"okr_attainment": [], "kpi_attainment": []}),
             "by_department": defaultdict(lambda: {"okr_attainment": [], "kpi_attainment": []}),
-            "by_manager": defaultdict(lambda: {"okr_attainment": [], "kpi_attainment": []})
+            "by_manager": defaultdict(lambda: {"okr_attainment": [], "kpi_attainment": []}),
         }
 
         for _, agent in self.oag.get_agents().items():
@@ -114,9 +114,13 @@ class MetricsEngine:
             # Rollup by manager
             if agent.manager_id:
                 if okr_attainments:
-                    rollups["by_manager"][agent.manager_id]["okr_attainment"].extend(okr_attainments)
+                    rollups["by_manager"][agent.manager_id]["okr_attainment"].extend(
+                        okr_attainments
+                    )
                 if kpi_attainments:
-                    rollups["by_manager"][agent.manager_id]["kpi_attainment"].extend(kpi_attainments)
+                    rollups["by_manager"][agent.manager_id]["kpi_attainment"].extend(
+                        kpi_attainments
+                    )
 
         # Calculate averages
         for category in rollups:
@@ -128,7 +132,7 @@ class MetricsEngine:
                     "okr_attainment": sum(okr_list) / len(okr_list) if okr_list else 0,
                     "kpi_attainment": sum(kpi_list) / len(kpi_list) if kpi_list else 0,
                     "okr_count": len(okr_list),
-                    "kpi_count": len(kpi_list)
+                    "kpi_count": len(kpi_list),
                 }
 
         return dict(rollups)
@@ -164,16 +168,32 @@ class MetricsEngine:
                 )
 
         return {
-            "overall": self._calculate_weighted_score([
-                (sum(all_okr_attainments) / len(all_okr_attainments) if all_okr_attainments else 0, 0.3),
-                (sum(all_kpi_attainments) / len(all_kpi_attainments) if all_kpi_attainments else 0, 0.3),
-                (task_completion, 0.2),
-                (budget_health, 0.2)
-            ]),
-            "okr_health": sum(all_okr_attainments) / len(all_okr_attainments) if all_okr_attainments else 0,
-            "kpi_health": sum(all_kpi_attainments) / len(all_kpi_attainments) if all_kpi_attainments else 0,
+            "overall": self._calculate_weighted_score(
+                [
+                    (
+                        sum(all_okr_attainments) / len(all_okr_attainments)
+                        if all_okr_attainments
+                        else 0,
+                        0.3,
+                    ),
+                    (
+                        sum(all_kpi_attainments) / len(all_kpi_attainments)
+                        if all_kpi_attainments
+                        else 0,
+                        0.3,
+                    ),
+                    (task_completion, 0.2),
+                    (budget_health, 0.2),
+                ]
+            ),
+            "okr_health": sum(all_okr_attainments) / len(all_okr_attainments)
+            if all_okr_attainments
+            else 0,
+            "kpi_health": sum(all_kpi_attainments) / len(all_kpi_attainments)
+            if all_kpi_attainments
+            else 0,
             "task_health": task_completion,
-            "budget_health": budget_health
+            "budget_health": budget_health,
         }
 
     def _calculate_weighted_score(self, scores_weights: list[tuple]) -> float:
@@ -198,27 +218,31 @@ class MetricsEngine:
             for kpi in agent.kpis:
                 attainment = self.calculate_kpi_attainment(kpi)
                 if attainment < 50:
-                    critical.append({
-                        "type": "kpi",
-                        "id": kpi.id,
-                        "metric": kpi.metric,
-                        "current": self.kpi_values.get(kpi.id, kpi.current),
-                        "target": kpi.target,
-                        "attainment": attainment,
-                        "owner": agent.role
-                    })
+                    critical.append(
+                        {
+                            "type": "kpi",
+                            "id": kpi.id,
+                            "metric": kpi.metric,
+                            "current": self.kpi_values.get(kpi.id, kpi.current),
+                            "target": kpi.target,
+                            "attainment": attainment,
+                            "owner": agent.role,
+                        }
+                    )
 
             # Check OKRs
             for okr in agent.okrs:
                 attainment = self.calculate_okr_attainment(okr)
                 if attainment < 50:
-                    critical.append({
-                        "type": "okr",
-                        "id": okr.objective.id,
-                        "objective": okr.objective.title,
-                        "attainment": attainment,
-                        "owner": agent.role
-                    })
+                    critical.append(
+                        {
+                            "type": "okr",
+                            "id": okr.objective.id,
+                            "objective": okr.objective.title,
+                            "attainment": attainment,
+                            "owner": agent.role,
+                        }
+                    )
 
         return critical
 
@@ -228,17 +252,13 @@ class MetricsEngine:
         return {
             "rollups": self.calculate_rollups(),
             "health": self.calculate_health_score(),
-            "critical": self.get_critical_metrics()
+            "critical": self.get_critical_metrics(),
         }
 
     def get_current_metrics(self) -> dict[str, Any]:
         """Get current state of all metrics"""
 
-        metrics = {
-            "okrs": {},
-            "kpis": {},
-            "tasks": {}
-        }
+        metrics = {"okrs": {}, "kpis": {}, "tasks": {}}
 
         # Collect OKR states
         for agent in self.oag.get_agents().values():
@@ -252,10 +272,10 @@ class MetricsEngine:
                             "id": kr.id,
                             "metric": kr.metric,
                             "current": self.kr_values.get(kr.id, kr.current),
-                            "target": kr.target
+                            "target": kr.target,
                         }
                         for kr in okr.key_results
-                    ]
+                    ],
                 }
 
             # Collect KPI states
@@ -265,7 +285,7 @@ class MetricsEngine:
                     "owner": agent.role,
                     "current": self.kpi_values.get(kpi.id, kpi.current),
                     "target": kpi.target,
-                    "attainment": self.calculate_kpi_attainment(kpi)
+                    "attainment": self.calculate_kpi_attainment(kpi),
                 }
 
         # Collect task states
@@ -273,7 +293,7 @@ class MetricsEngine:
             metrics["tasks"][task_id] = {
                 "description": task.description,
                 "status": task.status.value,
-                "cost": task.cost.actual_cost_usd
+                "cost": task.cost.actual_cost_usd,
             }
 
         return metrics

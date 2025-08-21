@@ -10,8 +10,7 @@ def test_budget_manager_tracking():
     """Test budget spend tracking"""
 
     budget_model = BudgetModel(
-        caps=BudgetCaps(soft_cap_usd=80.0, hard_cap_usd=100.0),
-        policy=BudgetPolicy.BALANCED
+        caps=BudgetCaps(soft_cap_usd=80.0, hard_cap_usd=100.0), policy=BudgetPolicy.BALANCED
     )
 
     manager = BudgetManager(budget_model)
@@ -30,9 +29,7 @@ def test_budget_manager_tracking():
 def test_budget_caps_enforcement():
     """Test that hard cap is enforced"""
 
-    budget_model = BudgetModel(
-        caps=BudgetCaps(soft_cap_usd=80.0, hard_cap_usd=100.0)
-    )
+    budget_model = BudgetModel(caps=BudgetCaps(soft_cap_usd=80.0, hard_cap_usd=100.0))
 
     manager = BudgetManager(budget_model)
 
@@ -47,9 +44,7 @@ def test_budget_caps_enforcement():
 def test_budget_alert_levels():
     """Test budget alert level calculation"""
 
-    budget_model = BudgetModel(
-        caps=BudgetCaps(soft_cap_usd=80.0, hard_cap_usd=100.0)
-    )
+    budget_model = BudgetModel(caps=BudgetCaps(soft_cap_usd=80.0, hard_cap_usd=100.0))
 
     manager = BudgetManager(budget_model)
 
@@ -76,9 +71,7 @@ def test_budget_alert_levels():
 def test_cfo_downgrade_on_soft_cap():
     """Test CFO downgrades models when approaching soft cap"""
 
-    budget_model = BudgetModel(
-        caps=BudgetCaps(soft_cap_usd=50.0, hard_cap_usd=100.0)
-    )
+    budget_model = BudgetModel(caps=BudgetCaps(soft_cap_usd=50.0, hard_cap_usd=100.0))
 
     manager = BudgetManager(budget_model)
     cfo = CFO(manager)
@@ -96,9 +89,7 @@ def test_cfo_downgrade_on_soft_cap():
 def test_cfo_spend_approval():
     """Test CFO approval logic for spending requests"""
 
-    budget_model = BudgetModel(
-        caps=BudgetCaps(soft_cap_usd=50.0, hard_cap_usd=100.0)
-    )
+    budget_model = BudgetModel(caps=BudgetCaps(soft_cap_usd=50.0, hard_cap_usd=100.0))
 
     manager = BudgetManager(budget_model)
     cfo = CFO(manager)
@@ -123,31 +114,21 @@ def test_cost_estimator():
 
     # C-suite should be most expensive
     c_suite_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.C_SUITE,
-        "gpt-4-turbo",
-        num_interactions=1
+        RoleLevel.C_SUITE, "gpt-4-turbo", num_interactions=1
     )
 
     # IC should be cheapest
-    ic_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.IC,
-        "gpt-3.5-turbo",
-        num_interactions=1
-    )
+    ic_cost = CostEstimator.estimate_task_cost(RoleLevel.IC, "gpt-3.5-turbo", num_interactions=1)
 
     assert c_suite_cost > ic_cost
 
     # More interactions = more cost
     single_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.MANAGER,
-        "gpt-3.5-turbo",
-        num_interactions=1
+        RoleLevel.MANAGER, "gpt-3.5-turbo", num_interactions=1
     )
 
     multi_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.MANAGER,
-        "gpt-3.5-turbo",
-        num_interactions=5
+        RoleLevel.MANAGER, "gpt-3.5-turbo", num_interactions=5
     )
 
     assert multi_cost == single_cost * 5

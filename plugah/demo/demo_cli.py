@@ -92,7 +92,7 @@ def print_oag(oag: dict):
     if "IC" in by_level:
         ic_branch = tree.add("⚡ Individual Contributors")
         for agent in by_level["IC"]:
-            spec = agent.get('specialization', agent['role'])
+            spec = agent.get("specialization", agent["role"])
             ic_branch.add(f"🔧 {spec} ({agent['id']})")
 
     console.print(tree)
@@ -111,7 +111,7 @@ def print_oag(oag: dict):
                 task.get("id", ""),
                 task.get("description", "")[:50],
                 task.get("status", "planned"),
-                task.get("agent_id", "")
+                task.get("agent_id", ""),
             )
 
         if len(tasks) > 10:
@@ -127,7 +127,7 @@ def print_oag(oag: dict):
         f"[red]Hard Cap:[/red] ${budget.get('caps', {}).get('hard_cap_usd', 0):,.2f}\n"
         f"[cyan]Forecast:[/cyan] ${budget.get('forecast_cost_usd', 0):,.2f}",
         title="💰 Budget",
-        expand=False
+        expand=False,
     )
     console.print(budget_panel)
 
@@ -155,7 +155,7 @@ def print_execution_summary(results: dict):
         f"[green]Total Spent:[/green] ${results.get('total_cost', 0):,.2f}\n"
         f"[yellow]Budget Remaining:[/yellow] ${results.get('budget_remaining', 0):,.2f}",
         title="💵 Final Costs",
-        expand=False
+        expand=False,
     )
     console.print(cost_panel)
 
@@ -169,29 +169,31 @@ def print_execution_summary(results: dict):
 
 
 async def run_demo(
-    prompt: str,
-    budget: float,
-    questions: list | None = None,
-    verbose: bool = False
+    prompt: str, budget: float, questions: list | None = None, verbose: bool = False
 ):
     """Run the full demo flow"""
 
-    console.print(Panel(f"[bold cyan]Plugah.ai Demo[/bold cyan]\n\nProject: {prompt}\nBudget: ${budget:,.2f}", expand=False))
+    console.print(
+        Panel(
+            f"[bold cyan]Plugah.ai Demo[/bold cyan]\n\nProject: {prompt}\nBudget: ${budget:,.2f}",
+            expand=False,
+        )
+    )
 
     # Initialize board room
     boardroom = BoardRoom()
 
     # Add callback for verbose output
     if verbose:
+
         def print_event(event, data):
             console.print(f"[dim]Event: {event}[/dim]")
+
         boardroom.add_callback(print_event)
 
     # Phase 1: Startup Discovery
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
     ) as progress:
         task = progress.add_task("Running startup discovery...", total=None)
 
@@ -211,16 +213,14 @@ async def run_demo(
             "Accurate summarization, Fast processing, Easy integration",
             "Must handle rate limits, Secure API keys, Scalable architecture",
             "2 weeks",
-            "Slack API"
+            "Slack API",
         ]
 
     console.print("\n[dim]Using simulated answers...[/dim]\n")
 
     # Process answers
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
     ) as progress:
         task = progress.add_task("Generating PRD...", total=None)
 
@@ -232,9 +232,7 @@ async def run_demo(
 
     # Phase 2: Planning
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
     ) as progress:
         task = progress.add_task("Planning organization...", total=None)
 
@@ -248,7 +246,7 @@ async def run_demo(
     # Save OAG to file
     oag_path = Path(f".runs/{boardroom.project_id}/oag.json")
     oag_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(oag_path, 'w') as f:
+    with open(oag_path, "w") as f:
         json.dump(oag.model_dump(), f, indent=2, default=str)
 
     console.print(f"\n[green]✓[/green] OAG saved to: {oag_path}")
@@ -257,9 +255,7 @@ async def run_demo(
     console.print("\n[bold]Starting execution...[/bold]")
 
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
     ) as progress:
         task = progress.add_task("Executing tasks...", total=len(oag.get_tasks()))
 
@@ -286,7 +282,9 @@ async def run_demo(
 
     # Generate audit report
     boardroom.audit_logger.generate_summary_report()
-    console.print(f"[green]✓[/green] Audit report saved to: .runs/{boardroom.project_id}/artifacts/summary_report.json")
+    console.print(
+        f"[green]✓[/green] Audit report saved to: .runs/{boardroom.project_id}/artifacts/summary_report.json"
+    )
 
     return boardroom.project_id
 
@@ -295,39 +293,19 @@ def main():
     """CLI entry point"""
 
     parser = argparse.ArgumentParser(description="Plugah.ai Demo CLI")
+    parser.add_argument("--prompt", type=str, required=True, help="Project prompt/description")
+    parser.add_argument("--budget", type=float, required=True, help="Budget in USD")
     parser.add_argument(
-        "--prompt",
-        type=str,
-        required=True,
-        help="Project prompt/description"
+        "--answers", type=str, nargs="+", help="Discovery question answers (optional)"
     )
-    parser.add_argument(
-        "--budget",
-        type=float,
-        required=True,
-        help="Budget in USD"
-    )
-    parser.add_argument(
-        "--answers",
-        type=str,
-        nargs="+",
-        help="Discovery question answers (optional)"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Show verbose output"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Show verbose output")
 
     args = parser.parse_args()
 
     # Run the demo
     project_id = asyncio.run(
         run_demo(
-            prompt=args.prompt,
-            budget=args.budget,
-            questions=args.answers,
-            verbose=args.verbose
+            prompt=args.prompt, budget=args.budget, questions=args.answers, verbose=args.verbose
         )
     )
 

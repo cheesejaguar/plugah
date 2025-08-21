@@ -42,7 +42,7 @@ TOOL_REGISTRY = {
         category=ToolCategory.RESEARCH,
         tags=["research", "discovery", "market-analysis"],
         cost_tier=2,
-        description="Search the web for information"
+        description="Search the web for information",
     ),
     "code_reader": Tool(
         id="code_reader",
@@ -50,7 +50,7 @@ TOOL_REGISTRY = {
         category=ToolCategory.CODE,
         tags=["code", "analysis", "review"],
         cost_tier=1,
-        description="Read and analyze code repositories"
+        description="Read and analyze code repositories",
     ),
     "code_chunker": Tool(
         id="code_chunker",
@@ -58,7 +58,7 @@ TOOL_REGISTRY = {
         category=ToolCategory.CODE,
         tags=["code", "processing", "chunking"],
         cost_tier=1,
-        description="Process large codebases into chunks"
+        description="Process large codebases into chunks",
     ),
     "data_tool": Tool(
         id="data_tool",
@@ -66,7 +66,7 @@ TOOL_REGISTRY = {
         category=ToolCategory.DATA,
         tags=["data", "csv", "sql", "analysis"],
         cost_tier=2,
-        description="Process and analyze data"
+        description="Process and analyze data",
     ),
     "writer": Tool(
         id="writer",
@@ -74,7 +74,7 @@ TOOL_REGISTRY = {
         category=ToolCategory.WRITING,
         tags=["writing", "documentation", "content"],
         cost_tier=1,
-        description="Generate written content and documentation"
+        description="Generate written content and documentation",
     ),
     "qa_tool": Tool(
         id="qa_tool",
@@ -82,7 +82,7 @@ TOOL_REGISTRY = {
         category=ToolCategory.TESTING,
         tags=["testing", "qa", "validation"],
         cost_tier=2,
-        description="Run tests and quality checks"
+        description="Run tests and quality checks",
     ),
 }
 
@@ -93,82 +93,67 @@ ROLE_PREFERENCES = {
         role="CEO",
         preferred_tools=["web_search", "writer"],
         required_tools=[],
-        excluded_tools=["code_chunker"]
+        excluded_tools=["code_chunker"],
     ),
     "CTO": RolePreferences(
-        role="CTO",
-        preferred_tools=["code_reader", "qa_tool"],
-        required_tools=[],
-        excluded_tools=[]
+        role="CTO", preferred_tools=["code_reader", "qa_tool"], required_tools=[], excluded_tools=[]
     ),
     "CFO": RolePreferences(
         role="CFO",
         preferred_tools=["data_tool"],
         required_tools=[],
-        excluded_tools=["code_reader", "code_chunker"]
+        excluded_tools=["code_reader", "code_chunker"],
     ),
     "VP_ENG": RolePreferences(
         role="VP Engineering",
         preferred_tools=["code_reader", "code_chunker", "qa_tool"],
         required_tools=["code_reader"],
-        excluded_tools=[]
+        excluded_tools=[],
     ),
     "VP_PRODUCT": RolePreferences(
         role="VP Product",
         preferred_tools=["web_search", "writer", "data_tool"],
         required_tools=["writer"],
-        excluded_tools=["code_chunker"]
+        excluded_tools=["code_chunker"],
     ),
     "VP_DATA": RolePreferences(
         role="VP Data",
         preferred_tools=["data_tool", "code_reader"],
         required_tools=["data_tool"],
-        excluded_tools=[]
+        excluded_tools=[],
     ),
     "DIRECTOR_PM": RolePreferences(
         role="Director PM",
         preferred_tools=["writer", "web_search"],
         required_tools=[],
-        excluded_tools=["code_chunker"]
+        excluded_tools=["code_chunker"],
     ),
     "SWE": RolePreferences(
         role="Software Engineer",
         preferred_tools=["code_reader", "code_chunker", "qa_tool"],
         required_tools=["code_reader"],
-        excluded_tools=[]
+        excluded_tools=[],
     ),
     "DATA_SCIENTIST": RolePreferences(
         role="Data Scientist",
         preferred_tools=["data_tool", "code_reader"],
         required_tools=["data_tool"],
-        excluded_tools=[]
+        excluded_tools=[],
     ),
     "QA_ENGINEER": RolePreferences(
         role="QA Engineer",
         preferred_tools=["qa_tool", "code_reader"],
         required_tools=["qa_tool"],
-        excluded_tools=[]
+        excluded_tools=[],
     ),
 }
 
 
 # Model tiers based on cost
 MODEL_TIERS = {
-    "premium": {
-        "name": "gpt-4-turbo",
-        "cost_per_1k": 0.01,
-        "capability": "high"
-    },
-    "standard": {
-        "name": "gpt-3.5-turbo",
-        "cost_per_1k": 0.002,
-        "capability": "medium"
-    },
-    "economy": {
-        "name": "gpt-3.5-turbo",
-        "cost_per_1k": 0.001,
-        "capability": "basic"
-    }
+    "premium": {"name": "gpt-4-turbo", "cost_per_1k": 0.01, "capability": "high"},
+    "standard": {"name": "gpt-3.5-turbo", "cost_per_1k": 0.002, "capability": "medium"},
+    "economy": {"name": "gpt-3.5-turbo", "cost_per_1k": 0.001, "capability": "basic"},
 }
 
 
@@ -177,10 +162,7 @@ class ToolSelector:
 
     @staticmethod
     def select_tools(
-        role: str,
-        task_description: str,
-        budget_policy: str,
-        available_budget: float
+        role: str, task_description: str, budget_policy: str, available_budget: float
     ) -> list[str]:
         """Select tools for a role/task combination"""
 
@@ -226,11 +208,7 @@ class ToolSelector:
         return unique
 
     @staticmethod
-    def select_model(
-        role_level: str,
-        budget_policy: str,
-        task_complexity: str = "medium"
-    ) -> str:
+    def select_model(role_level: str, budget_policy: str, task_complexity: str = "medium") -> str:
         """Select appropriate model based on role and budget"""
 
         if budget_policy == "conservative":
@@ -268,23 +246,23 @@ def get_specialization_for_domain(domain: str, role: str) -> str | None:
         "web": {
             "Engineer": "Frontend Engineer",
             "Manager": "Product Manager",
-            "Director": "Director of Engineering"
+            "Director": "Director of Engineering",
         },
         "data": {
             "Engineer": "Data Engineer",
             "Scientist": "Data Scientist",
-            "Manager": "Data Manager"
+            "Manager": "Data Manager",
         },
         "api": {
             "Engineer": "Backend Engineer",
             "Architect": "Tech Architect",
-            "Manager": "Engineering Manager"
+            "Manager": "Engineering Manager",
         },
         "mobile": {
             "Engineer": "Mobile Engineer",
             "Designer": "UX Designer",
-            "Manager": "Product Manager"
-        }
+            "Manager": "Product Manager",
+        },
     }
 
     domain_map = domain_specializations.get(domain.lower(), {})
