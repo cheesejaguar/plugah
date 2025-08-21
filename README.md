@@ -12,7 +12,7 @@ Multi-agent orchestration system with organizational hierarchy - dynamically gen
 
 Plugah.ai creates a virtual organization of AI agents to tackle complex projects. While the system uses a business hierarchy metaphor for organization (CEO → VPs → Directors → Managers → ICs), agents can take on any role or job title needed for your specific project - from Software Engineers and Data Scientists to Game Designers, Research Analysts, Content Writers, or Domain Specialists. The system features:
 
-- **Startup Discovery Phase**: Co-founders interview you to understand requirements
+- **Startup Discovery Phase**: Dynamically generates 5 discovery questions via OpenAI (mocked in CI)
 - **Dynamic Organization Planning**: Generates org structure based on project needs and budget
 - **Budget Management**: CFO monitors spending with soft/hard caps and automatic downgrades
 - **OKR/KPI Tracking**: Metrics rollup through organizational hierarchy
@@ -47,7 +47,7 @@ async def main():
     # Initialize the board room
     br = BoardRoom()
     
-    # Phase 1: Generate discovery questions
+    # Phase 1: Generate discovery questions (OpenAI-driven; mocked if PLUGAH_MODE=mock)
     questions = await br.startup_phase(
         problem="Build a Slack summarizer bot",
         budget_usd=100.0,
