@@ -1,0 +1,39 @@
+# Include the README and LICENSE
+include README.md
+include LICENSE
+
+# Include the example environment file
+include .env.example
+
+# Include the CLAUDE.md documentation
+include CLAUDE.md
+
+# Include type hints
+include py.typed
+
+# Include all test files
+recursive-include tests *.py
+
+# Include web assets (for demo)
+recursive-include web/backend *.py
+recursive-include web/frontend/src *.tsx *.ts *.css
+include web/frontend/package.json
+include web/frontend/tsconfig.json
+include web/frontend/vite.config.ts
+include web/frontend/index.html
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude .coverage
+global-exclude .pytest_cache
+global-exclude .ruff_cache
+global-exclude .mypy_cache
+exclude .gitignore
+exclude .github
+recursive-exclude .github *
+exclude .runs
+recursive-exclude .runs *
+exclude .cache
+recursive-exclude .cache *

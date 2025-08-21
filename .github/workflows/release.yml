@@ -1,0 +1,191 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+          TAG="v${VERSION}"
+        else
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "tag=${TAG}" >> $GITHUB_OUTPUT
+        echo "📦 Preparing release for version ${VERSION}"
+    
+    - name: Update version in pyproject.toml
+      run: |
+        sed -i "s/^version = .*/version = \"${{ steps.version.outputs.version }}\"/" pyproject.toml
+        git diff pyproject.toml
+    
+    - name: Update version in __init__.py
+      run: |
+        sed -i "s/__version__ = .*/__version__ = \"${{ steps.version.outputs.version }}\"/" plugah/__init__.py
+        git diff plugah/__init__.py
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get commits since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          COMMITS=$(git log --pretty=format:"- %s (%an)" --no-merges)
+        else
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%an)" --no-merges)
+        fi
+        
+        # Create changelog
+        cat > RELEASE_NOTES.md << EOF
+        # Release ${{ steps.version.outputs.version }}
+        
+        ## What's Changed
+        ${COMMITS}
+        
+        ## Installation
+        \`\`\`bash
+        pip install plugah==${{ steps.version.outputs.version }}
+        \`\`\`
+        
+        ## Docker
+        \`\`\`bash
+        docker pull ghcr.io/cheesejaguar/plugah:${{ steps.version.outputs.version }}
+        \`\`\`
+        EOF
+        
+        cat RELEASE_NOTES.md
+    
+    - name: Upload release notes
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: RELEASE_NOTES.md
+
+  build-docker:
+    name: Build Docker Image
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create Dockerfile
+      run: |
+        cat > Dockerfile << 'EOF'
+        FROM python:3.11-slim
+        
+        WORKDIR /app
+        
+        # Install system dependencies
+        RUN apt-get update && apt-get install -y \
+            curl \
+            && rm -rf /var/lib/apt/lists/*
+        
+        # Install uv
+        RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+        ENV PATH="/root/.cargo/bin:${PATH}"
+        
+        # Copy project files
+        COPY pyproject.toml uv.lock ./
+        COPY plugah/ ./plugah/
+        COPY web/ ./web/
+        
+        # Install Python dependencies
+        RUN uv pip install --system -e ".[demo]"
+        
+        # Build frontend
+        WORKDIR /app/web/frontend
+        RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+            apt-get install -y nodejs && \
+            npm ci && \
+            npm run build
+        
+        WORKDIR /app
+        
+        # Expose ports
+        EXPOSE 8000
+        
+        # Default command
+        CMD ["uvicorn", "web.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+        EOF
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:${{ needs.prepare-release.outputs.version }}
+          ghcr.io/${{ github.repository }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: [prepare-release, build-docker]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download release notes
+      uses: actions/download-artifact@v4
+      with:
+        name: release-notes
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.prepare-release.outputs.tag }}
+        name: Release ${{ needs.prepare-release.outputs.version }}
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: ${{ contains(needs.prepare-release.outputs.version, '-') }}
+        generate_release_notes: true
+    
+    - name: Trigger PyPI publish
+      run: |
+        echo "GitHub Release created. PyPI publish will be triggered automatically."
