@@ -2,6 +2,7 @@
 System prompt templates for different role levels and specializations
 """
 
+from typing import Optional
 
 from jinja2 import Template
 

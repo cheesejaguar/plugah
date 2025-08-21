@@ -82,10 +82,10 @@ class Executor:
     async def execute(self, parallel: bool = True) -> dict[str, ExecutionResult]:
         """
         Execute the OAG
-        
+
         Args:
             parallel: Whether to execute independent tasks in parallel
-        
+
         Returns:
             Dictionary of task_id -> ExecutionResult
         """

@@ -28,7 +28,7 @@ class BudgetManager:
     def record_spend(self, amount: float, description: str = "") -> bool:
         """
         Record a spend amount
-        
+
         Returns:
             True if spend was recorded, False if it would exceed hard cap
         """

@@ -4,6 +4,7 @@ Tool and role-template registry with capabilities, tags, and selectors
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 
 class ToolCategory(str, Enum):

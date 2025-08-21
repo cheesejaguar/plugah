@@ -22,10 +22,10 @@ class PatchManager:
     def apply_patch(self, patch_ops: dict | list[dict]) -> bool:
         """
         Apply a JSON patch to the OAG
-        
+
         Args:
             patch_ops: Single patch operation or list of operations
-        
+
         Returns:
             True if patch was successfully applied
         """

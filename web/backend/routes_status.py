@@ -2,9 +2,9 @@
 Status and monitoring routes
 """
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
-import networkx as nx
 
 try:
     from .deps import get_session
@@ -17,14 +17,14 @@ router = APIRouter()
 @router.get("/oag/{session_id}")
 async def get_oag(session_id: str):
     """Get current OAG for a session"""
-    
+
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     if not session.oag:
         raise HTTPException(status_code=400, detail="OAG not generated yet")
-    
+
     return {
         "session_id": session_id,
         "oag": session.oag
@@ -34,16 +34,16 @@ async def get_oag(session_id: str):
 @router.get("/summary/{session_id}")
 async def get_summary(session_id: str):
     """Get execution summary"""
-    
+
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     if not session.boardroom:
         raise HTTPException(status_code=400, detail="Session not initialized")
-    
+
     status = session.boardroom.get_status()
-    
+
     return {
         "session_id": session_id,
         "phase": status.get("phase"),
@@ -56,28 +56,28 @@ async def get_summary(session_id: str):
 @router.get("/orgchart/{session_id}")
 async def get_orgchart(session_id: str):
     """Get organization chart data for visualization"""
-    
+
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     if not session.oag:
         raise HTTPException(status_code=400, detail="OAG not generated yet")
-    
+
     # Build org chart structure
     org_chart = build_org_chart(session.oag)
-    
+
     return {
         "session_id": session_id,
         "chart": org_chart
     }
 
 
-def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
+def build_org_chart(oag: dict[str, Any]) -> dict[str, Any]:
     """Build organization chart structure for frontend"""
-    
+
     nodes = oag.get("nodes", {})
-    
+
     # Group agents by level
     by_level = {
         "C_SUITE": [],
@@ -86,7 +86,7 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
         "MANAGER": [],
         "IC": []
     }
-    
+
     # Build hierarchy
     for node_id, node in nodes.items():
         if node.get("node_type") == "agent":
@@ -101,14 +101,14 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
                 "kpis": len(node.get("kpis", []))
             }
             by_level[level].append(agent_info)
-    
+
     # Build tree structure
     tree = {
         "id": "root",
         "name": "Organization",
         "children": []
     }
-    
+
     # Add Board Room
     board_room = {
         "id": "board_room",
@@ -123,7 +123,7 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
         ]
     }
     tree["children"].append(board_room)
-    
+
     # Add departments
     if by_level["VP"]:
         departments = {
@@ -131,7 +131,7 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
             "name": "Departments",
             "children": []
         }
-        
+
         for vp in by_level["VP"]:
             dept = {
                 "id": f"dept_{vp['id']}",
@@ -139,7 +139,7 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
                 "data": vp,
                 "children": []
             }
-            
+
             # Add directors under this VP
             for director in by_level["DIRECTOR"]:
                 if director["manager_id"] == vp["id"]:
@@ -149,7 +149,7 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
                         "data": director,
                         "children": []
                     }
-                    
+
                     # Add managers under this director
                     for manager in by_level["MANAGER"]:
                         if manager["manager_id"] == director["id"]:
@@ -159,7 +159,7 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
                                 "data": manager,
                                 "children": []
                             }
-                            
+
                             # Add ICs under this manager
                             for ic in by_level["IC"]:
                                 if ic["manager_id"] == manager["id"]:
@@ -169,26 +169,26 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
                                         "data": ic
                                     }
                                     mgr_node["children"].append(ic_node)
-                            
+
                             dir_node["children"].append(mgr_node)
-                    
+
                     dept["children"].append(dir_node)
-            
+
             departments["children"].append(dept)
-        
+
         tree["children"].append(departments)
-    
+
     # Add task summary
     tasks = [n for n in nodes.values() if n.get("node_type") == "task"]
     task_summary = {
         "total": len(tasks),
         "by_status": {}
     }
-    
+
     for task in tasks:
         status = task.get("status", "planned")
         task_summary["by_status"][status] = task_summary["by_status"].get(status, 0) + 1
-    
+
     return {
         "tree": tree,
         "agents_count": len([n for n in nodes.values() if n.get("node_type") == "agent"]),
@@ -199,14 +199,14 @@ def build_org_chart(oag: Dict[str, Any]) -> Dict[str, Any]:
 @router.get("/metrics/{session_id}")
 async def get_metrics(session_id: str):
     """Get current metrics and KPIs"""
-    
+
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     if not session.boardroom:
         raise HTTPException(status_code=400, detail="Session not initialized")
-    
+
     if hasattr(session.boardroom, 'metrics_engine') and session.boardroom.metrics_engine:
         metrics = session.boardroom.metrics_engine.calculate_all()
         return {
@@ -227,19 +227,19 @@ async def get_metrics(session_id: str):
 @router.get("/artifacts/{session_id}")
 async def list_artifacts(session_id: str):
     """List artifacts for a session"""
-    
+
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    
+
     if not session.boardroom:
         raise HTTPException(status_code=400, detail="Session not initialized")
-    
+
     # Get artifacts from audit logger
     artifacts = []
     if hasattr(session.boardroom, 'audit_logger'):
         artifacts = session.boardroom.audit_logger._list_artifacts()
-    
+
     return {
         "session_id": session_id,
         "artifacts": artifacts

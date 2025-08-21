@@ -25,7 +25,7 @@ class Materializer:
     ) -> tuple[dict[str, Agent], dict[str, Task], dict[str, Any]]:
         """
         Materialize an OAG into CrewAI agents and tasks
-        
+
         Returns:
             - agents: Dict mapping agent_id to CrewAI Agent
             - tasks: Dict mapping task_id to CrewAI Task

@@ -2,19 +2,20 @@
 FastAPI backend for plugah.ai demo
 """
 
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+
+import uvicorn
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-import uvicorn
 
 try:
-    from .routes_startup import router as startup_router
     from .routes_run import router as run_router
+    from .routes_startup import router as startup_router
     from .routes_status import router as status_router
 except ImportError:
-    from routes_startup import router as startup_router
     from routes_run import router as run_router
+    from routes_startup import router as startup_router
     from routes_status import router as status_router
 
 app = FastAPI(

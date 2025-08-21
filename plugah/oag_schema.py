@@ -4,7 +4,7 @@ Organizational Agent Graph (OAG) schema definitions using Pydantic v2
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional, Literal
+from typing import Any, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 

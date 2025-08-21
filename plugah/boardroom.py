@@ -33,7 +33,7 @@ class Startup:
     ) -> dict[str, Any]:
         """
         Run startup discovery phase
-        
+
         Returns:
             PRD with objectives, constraints, success criteria, etc.
         """

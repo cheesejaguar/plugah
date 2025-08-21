@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import json
 from pathlib import Path
+from typing import Optional
 
 from rich import print as rprint
 from rich.console import Console

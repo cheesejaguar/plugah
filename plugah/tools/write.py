@@ -2,6 +2,8 @@
 Writing and documentation tool stubs
 """
 
+from typing import Optional
+
 from crewai_tools import BaseTool
 
 

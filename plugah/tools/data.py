@@ -2,6 +2,8 @@
 Data processing tool stubs
 """
 
+from typing import Optional
+
 import pandas as pd
 from crewai_tools import BaseTool
 
