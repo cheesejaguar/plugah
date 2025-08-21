@@ -285,7 +285,6 @@ class BoardRoom:
                 TaskSpec,
                 TaskStatus,
             )
-            from .selector import Selector
 
             meta = OrgMeta(
                 project_id=self.project_id,
@@ -300,14 +299,14 @@ class BoardRoom:
             )
 
             # Create minimal org structure
-            selector = Selector()
+            mock_selector = Selector()
 
             ceo = AgentSpec(
                 id="ceo",
                 role="CEO",
                 level=RoleLevel.C_SUITE,
                 llm="gpt-5-nano",
-                system_prompt=selector.compose_system_prompt(
+                system_prompt=mock_selector.compose_system_prompt(
                     role="CEO",
                     level=RoleLevel.C_SUITE,
                     project_title=meta.title,
@@ -594,6 +593,8 @@ class BoardRoom:
             ]
 
             parent = oag.get_node(getattr(mgr, "manager_id", "") or "")
+            parent_okrs = []
+            parent_kpis = []
             if parent is not None:
                 parent_okrs = getattr(parent, "okrs", []) or []
                 parent_kpis = getattr(parent, "kpis", []) or []
