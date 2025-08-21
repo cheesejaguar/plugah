@@ -4,7 +4,8 @@ Organizational Agent Graph (OAG) schema definitions using Pydantic v2
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Literal, Any, Union
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -52,7 +53,7 @@ class Reusability(str, Enum):
 class OrgMeta(BaseModel):
     project_id: str
     title: str
-    domain: Optional[str] = None
+    domain: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     version: int = 1
@@ -69,21 +70,21 @@ class KeyResult(BaseModel):
     id: str
     objective_id: str
     metric: str
-    target: Union[float, int]
-    current: Union[float, int] = 0
+    target: float | int
+    current: float | int = 0
     direction: Direction = Direction.GTE
 
 
 class OKR(BaseModel):
     objective: Objective
-    key_results: List[KeyResult] = []
+    key_results: list[KeyResult] = []
 
 
 class KPI(BaseModel):
     id: str
     metric: str
-    target: Union[float, int]
-    current: Union[float, int] = 0
+    target: float | int
+    current: float | int = 0
     direction: Direction = Direction.GTE
     owner_agent_id: str
 
@@ -96,14 +97,14 @@ class ContractIO(BaseModel):
 
 
 class Contract(BaseModel):
-    inputs: List[ContractIO] = []
-    outputs: List[ContractIO] = []
+    inputs: list[ContractIO] = []
+    outputs: list[ContractIO] = []
     definition_of_done: str
 
 
 class ToolRef(BaseModel):
     id: str
-    args: Optional[Dict[str, Any]] = None
+    args: dict[str, Any] | None = None
 
 
 class BudgetCaps(BaseModel):
@@ -121,13 +122,13 @@ class AgentSpec(BaseModel):
     id: str
     role: str
     level: RoleLevel
-    manager_id: Optional[str] = None
-    specialization: Optional[str] = None
+    manager_id: str | None = None
+    specialization: str | None = None
     system_prompt: str = ""
-    tools: List[ToolRef] = []
-    llm: Optional[str] = None
-    okrs: List[OKR] = []
-    kpis: List[KPI] = []
+    tools: list[ToolRef] = []
+    llm: str | None = None
+    okrs: list[OKR] = []
+    kpis: list[KPI] = []
     reusability: Reusability = Reusability.EXCLUSIVE
     node_type: Literal["agent"] = "agent"
 
@@ -139,9 +140,9 @@ class TaskSpec(BaseModel):
     contract: Contract
     expected_output: str
     status: TaskStatus = TaskStatus.PLANNED
-    artifacts: Dict[str, Any] = {}
+    artifacts: dict[str, Any] = {}
     cost: CostTrack = Field(default_factory=CostTrack)
-    dependencies: List[str] = []
+    dependencies: list[str] = []
     node_type: Literal["task"] = "task"
 
 
@@ -149,8 +150,8 @@ class Edge(BaseModel):
     id: str
     from_id: str
     to_id: str
-    condition: Optional[str] = None
-    mapping: Dict[str, str] = {}
+    condition: str | None = None
+    mapping: dict[str, str] = {}
 
 
 class BudgetModel(BaseModel):
@@ -163,8 +164,8 @@ class BudgetModel(BaseModel):
 class OAG(BaseModel):
     meta: OrgMeta
     budget: BudgetModel
-    nodes: Dict[str, Union[AgentSpec, TaskSpec]]
-    edges: List[Edge] = []
+    nodes: dict[str, AgentSpec | TaskSpec]
+    edges: list[Edge] = []
 
     @field_validator('nodes')
     @classmethod
@@ -174,22 +175,22 @@ class OAG(BaseModel):
                 raise ValueError(f"Node ID mismatch: {node_id} != {node.id}")
         return v
 
-    def get_agents(self) -> Dict[str, AgentSpec]:
+    def get_agents(self) -> dict[str, AgentSpec]:
         return {k: v for k, v in self.nodes.items() if isinstance(v, AgentSpec)}
 
-    def get_tasks(self) -> Dict[str, TaskSpec]:
+    def get_tasks(self) -> dict[str, TaskSpec]:
         return {k: v for k, v in self.nodes.items() if isinstance(v, TaskSpec)}
 
-    def get_node(self, node_id: str) -> Optional[Union[AgentSpec, TaskSpec]]:
+    def get_node(self, node_id: str) -> AgentSpec | TaskSpec | None:
         return self.nodes.get(node_id)
 
-    def add_node(self, node: Union[AgentSpec, TaskSpec]):
+    def add_node(self, node: AgentSpec | TaskSpec):
         self.nodes[node.id] = node
 
     def add_edge(self, edge: Edge):
         self.edges.append(edge)
 
-    def get_dependencies(self, task_id: str) -> List[str]:
+    def get_dependencies(self, task_id: str) -> list[str]:
         deps = []
         for edge in self.edges:
             if edge.to_id == task_id:

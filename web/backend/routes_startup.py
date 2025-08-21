@@ -8,7 +8,10 @@ from typing import List, Optional, Dict, Any
 import asyncio
 
 from plugah.boardroom import BoardRoom, Startup
-from .deps import create_session, get_session, update_session
+try:
+    from .deps import create_session, get_session, update_session
+except ImportError:
+    from deps import create_session, get_session, update_session
 
 router = APIRouter()
 

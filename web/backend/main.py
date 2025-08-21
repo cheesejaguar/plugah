@@ -8,9 +8,14 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 import uvicorn
 
-from .routes_startup import router as startup_router
-from .routes_run import router as run_router
-from .routes_status import router as status_router
+try:
+    from .routes_startup import router as startup_router
+    from .routes_run import router as run_router
+    from .routes_status import router as status_router
+except ImportError:
+    from routes_startup import router as startup_router
+    from routes_run import router as run_router
+    from routes_status import router as status_router
 
 app = FastAPI(
     title="Plugah.ai API",

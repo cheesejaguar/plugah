@@ -6,7 +6,10 @@ from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
 import networkx as nx
 
-from .deps import get_session
+try:
+    from .deps import get_session
+except ImportError:
+    from deps import get_session
 
 router = APIRouter()
 

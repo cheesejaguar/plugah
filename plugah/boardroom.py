@@ -2,80 +2,79 @@
 Top orchestrator: CEO/CTO/CFO + startup discovery, patch loop
 """
 
-import asyncio
 import uuid
-from typing import Dict, List, Any, Optional, Callable
+from collections.abc import Callable
 from datetime import datetime
-from crewai import Agent, Task, Crew
+from typing import Any
+
+from .audit import AuditLogger
+from .budget import CFO, BudgetManager
+from .executor import ExecutionEvent, Executor
+from .metrics import MetricsEngine
 from .oag_schema import OAG
+from .patches import PatchManager
 from .planner import Planner
 from .selector import Selector
-from .executor import Executor, ExecutionEvent
-from .budget import BudgetManager, CFO
-from .metrics import MetricsEngine
-from .patches import PatchManager
-from .audit import AuditLogger
-from .templates import get_discovery_prompt
 
 
 class Startup:
     """Startup phase: co-founders conduct discovery"""
-    
+
     def __init__(self):
-        self.discovery_questions: List[str] = []
-        self.discovery_answers: List[str] = []
-        self.prd: Dict[str, Any] = {}
-    
+        self.discovery_questions: list[str] = []
+        self.discovery_answers: list[str] = []
+        self.prd: dict[str, Any] = {}
+
     async def run(
         self,
         problem: str,
         budget_usd: float,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Run startup discovery phase
         
         Returns:
             PRD with objectives, constraints, success criteria, etc.
         """
-        
+
         context = context or {}
-        
+
         # Generate discovery questions
         self.discovery_questions = await self._generate_questions(problem, context)
-        
+
         # Return questions for user to answer (in demo, we'll simulate)
         return {
             "questions": self.discovery_questions,
             "problem": problem,
             "budget": budget_usd
         }
-    
+
     async def process_answers(
         self,
-        answers: List[str],
+        answers: list[str],
         problem: str,
         budget_usd: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process discovery answers and generate PRD"""
-        
+
         self.discovery_answers = answers
-        
+
         # Generate PRD from problem and answers
         self.prd = await self._generate_prd(problem, answers, budget_usd)
-        
+
         return self.prd
-    
+
     async def _generate_questions(
         self,
         problem: str,
-        context: Dict[str, Any]
-    ) -> List[str]:
+        context: dict[str, Any]
+    ) -> list[str]:
         """Generate discovery questions"""
-        
+
         # For demo, return pre-defined questions
         # In production, this would use an LLM
-        
+
         questions = [
             "Who are the primary users/customers for this solution?",
             "What are the top 3 success criteria that would define project completion?",
@@ -86,20 +85,20 @@ class Startup:
             "What should explicitly NOT be included in this project (non-goals)?",
             "How will you measure the success of this project post-launch?"
         ]
-        
+
         return questions[:5]  # Return top 5 questions
-    
+
     async def _generate_prd(
         self,
         problem: str,
-        answers: List[str],
+        answers: list[str],
         budget_usd: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate PRD from problem and discovery answers"""
-        
+
         # For demo, create a structured PRD
         # In production, this would use an LLM to analyze answers
-        
+
         prd = {
             "title": self._extract_title(problem),
             "problem_statement": problem,
@@ -115,21 +114,21 @@ class Startup:
             "non_goals": [],
             "created_at": datetime.utcnow().isoformat()
         }
-        
+
         return prd
-    
+
     def _extract_title(self, problem: str) -> str:
         """Extract a title from the problem statement"""
-        
+
         # Simple extraction - take first few words
         words = problem.split()[:5]
         return " ".join(words)
-    
+
     def _infer_domain(self, problem: str) -> str:
         """Infer domain from problem statement"""
-        
+
         problem_lower = problem.lower()
-        
+
         if any(word in problem_lower for word in ["web", "website", "site"]):
             return "web"
         elif any(word in problem_lower for word in ["data", "analytics", "ml", "ai"]):
@@ -140,46 +139,46 @@ class Startup:
             return "mobile"
         else:
             return "general"
-    
-    def _parse_success_criteria(self, answer: str) -> List[str]:
+
+    def _parse_success_criteria(self, answer: str) -> list[str]:
         """Parse success criteria from answer"""
-        
+
         if not answer:
             return ["Project delivered on time", "Meets user requirements", "Within budget"]
-        
+
         # Split by common delimiters
         criteria = []
         for delimiter in [",", ";", "\n", ".", "-"]:
             if delimiter in answer:
                 criteria = answer.split(delimiter)
                 break
-        
+
         if not criteria:
             criteria = [answer]
-        
+
         return [c.strip() for c in criteria if c.strip()][:3]
-    
-    def _parse_constraints(self, answer: str) -> List[str]:
+
+    def _parse_constraints(self, answer: str) -> list[str]:
         """Parse constraints from answer"""
-        
+
         if not answer:
             return ["Must be scalable", "Security best practices"]
-        
+
         # Similar parsing to success criteria
         constraints = []
         for delimiter in [",", ";", "\n", ".", "-"]:
             if delimiter in answer:
                 constraints = answer.split(delimiter)
                 break
-        
+
         if not constraints:
             constraints = [answer]
-        
+
         return [c.strip() for c in constraints if c.strip()]
-    
-    def _generate_objectives(self, problem: str, answers: List[str]) -> List[Dict[str, str]]:
+
+    def _generate_objectives(self, problem: str, answers: list[str]) -> list[dict[str, str]]:
         """Generate objectives from problem and answers"""
-        
+
         objectives = [
             {
                 "id": "obj_1",
@@ -197,12 +196,12 @@ class Startup:
                 "description": "Provide documentation and deploy to production"
             }
         ]
-        
+
         return objectives
-    
-    def _generate_key_results(self, problem: str) -> List[Dict[str, Any]]:
+
+    def _generate_key_results(self, problem: str) -> list[dict[str, Any]]:
         """Generate key results"""
-        
+
         return [
             {
                 "id": "kr_1",
@@ -233,176 +232,176 @@ class Startup:
 
 class BoardRoom:
     """Main orchestrator with C-suite oversight"""
-    
+
     def __init__(
         self,
-        project_id: Optional[str] = None,
-        audit_logger: Optional[AuditLogger] = None
+        project_id: str | None = None,
+        audit_logger: AuditLogger | None = None
     ):
         self.project_id = project_id or str(uuid.uuid4())
         self.audit_logger = audit_logger or AuditLogger(self.project_id)
         self.startup = Startup()
-        self.planner: Optional[Planner] = None
-        self.executor: Optional[Executor] = None
-        self.oag: Optional[OAG] = None
-        self.budget_manager: Optional[BudgetManager] = None
-        self.cfo: Optional[CFO] = None
-        self.metrics_engine: Optional[MetricsEngine] = None
-        self.patch_manager: Optional[PatchManager] = None
-        self.callbacks: List[Callable] = []
-    
+        self.planner: Planner | None = None
+        self.executor: Executor | None = None
+        self.oag: OAG | None = None
+        self.budget_manager: BudgetManager | None = None
+        self.cfo: CFO | None = None
+        self.metrics_engine: MetricsEngine | None = None
+        self.patch_manager: PatchManager | None = None
+        self.callbacks: list[Callable] = []
+
     def add_callback(self, callback: Callable):
         """Add an event callback"""
         self.callbacks.append(callback)
-    
-    def _emit_event(self, event: str, data: Dict[str, Any]):
+
+    def _emit_event(self, event: str, data: dict[str, Any]):
         """Emit an event to callbacks"""
         for callback in self.callbacks:
             try:
                 callback(event, data)
             except Exception as e:
                 print(f"Callback error: {e}")
-    
+
     async def startup_phase(
         self,
         problem: str,
         budget_usd: float,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Run startup discovery phase"""
-        
+
         self._emit_event("startup_begin", {
             "problem": problem,
             "budget": budget_usd
         })
-        
+
         # Generate questions
         discovery = await self.startup.run(problem, budget_usd, context)
-        
+
         self._emit_event("discovery_questions", discovery)
-        
+
         return discovery
-    
+
     async def process_discovery(
         self,
-        answers: List[str],
+        answers: list[str],
         problem: str,
         budget_usd: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process discovery answers and generate PRD"""
-        
+
         self._emit_event("processing_answers", {"num_answers": len(answers)})
-        
+
         prd = await self.startup.process_answers(answers, problem, budget_usd)
-        
+
         self._emit_event("prd_generated", prd)
         self.audit_logger.log_event("prd_generated", prd)
-        
+
         return prd
-    
+
     async def plan_organization(
         self,
-        prd: Dict[str, Any],
+        prd: dict[str, Any],
         budget_usd: float
     ) -> OAG:
         """Plan the organizational structure"""
-        
+
         self._emit_event("planning_begin", {"prd": prd["title"]})
-        
+
         # Initialize components
         selector = Selector(budget_policy="balanced")
         self.planner = Planner(selector)
-        
+
         # Create OAG
         self.oag = self.planner.plan(prd, budget_usd)
-        
+
         # Initialize budget manager
         self.budget_manager = BudgetManager(self.oag.budget)
         self.cfo = CFO(self.budget_manager)
-        
+
         # Initialize metrics engine
         self.metrics_engine = MetricsEngine(self.oag)
-        
+
         # Initialize patch manager
         self.patch_manager = PatchManager(self.oag, self.audit_logger)
-        
+
         self._emit_event("planning_complete", {
             "num_agents": len(self.oag.get_agents()),
             "num_tasks": len(self.oag.get_tasks()),
             "forecast_cost": self.oag.budget.forecast_cost_usd
         })
-        
+
         self.audit_logger.log_event("oag_created", {
             "agents": len(self.oag.get_agents()),
             "tasks": len(self.oag.get_tasks())
         })
-        
+
         return self.oag
-    
-    async def execute(self) -> Dict[str, Any]:
+
+    async def execute(self) -> dict[str, Any]:
         """Execute the planned organization"""
-        
+
         if not self.oag:
             raise ValueError("No OAG to execute. Run plan_organization first.")
-        
+
         self._emit_event("execution_begin", {
             "project_id": self.project_id
         })
-        
+
         # Create executor
         self.executor = Executor(
             self.oag,
             self.budget_manager
         )
-        
+
         # Add execution callbacks
         self.executor.add_callback(self._handle_execution_event)
-        
+
         # Execute
         results = await self.executor.execute(parallel=True)
-        
+
         # Calculate final metrics
         final_metrics = self.metrics_engine.calculate_all()
-        
+
         self._emit_event("execution_complete", {
             "results": len(results),
             "total_cost": self.budget_manager.get_spent(),
             "metrics": final_metrics
         })
-        
+
         self.audit_logger.log_event("execution_complete", {
             "total_cost": self.budget_manager.get_spent(),
             "tasks_completed": len([r for r in results.values() if r.status.value == "done"])
         })
-        
+
         return {
             "results": results,
             "metrics": final_metrics,
             "total_cost": self.budget_manager.get_spent(),
             "budget_remaining": self.budget_manager.get_remaining()
         }
-    
-    def _handle_execution_event(self, event: ExecutionEvent, data: Dict[str, Any]):
+
+    def _handle_execution_event(self, event: ExecutionEvent, data: dict[str, Any]):
         """Handle events from executor"""
-        
+
         # Log to audit
         self.audit_logger.log_event(event.value, data)
-        
+
         # Forward to callbacks
         self._emit_event(event.value, data)
-        
+
         # Handle specific events
         if event == ExecutionEvent.BUDGET_WARNING:
             self._handle_budget_warning(data)
         elif event == ExecutionEvent.TASK_COMPLETE:
             self._update_metrics(data)
-    
-    def _handle_budget_warning(self, data: Dict[str, Any]):
+
+    def _handle_budget_warning(self, data: dict[str, Any]):
         """Handle budget warning by potentially applying patches"""
-        
+
         # Get CFO recommendations
         recommendations = self.cfo.budget_manager.get_recommendations()
-        
+
         # Generate patch if needed
         patch = self.cfo.generate_budget_patch()
         if patch:
@@ -411,24 +410,24 @@ class BoardRoom:
                 "patch": patch,
                 "reason": "Budget warning"
             })
-    
-    def _update_metrics(self, data: Dict[str, Any]):
+
+    def _update_metrics(self, data: dict[str, Any]):
         """Update metrics after task completion"""
-        
+
         if self.metrics_engine:
             # Update KPIs based on task output
             task_id = data.get("task_id")
             if task_id:
                 self.metrics_engine.update_from_task(task_id, data.get("output", {}))
-            
+
             # Calculate rollups
             rollups = self.metrics_engine.calculate_rollups()
-            
+
             self._emit_event("metrics_updated", rollups)
-    
-    def get_status(self) -> Dict[str, Any]:
+
+    def get_status(self) -> dict[str, Any]:
         """Get current status of the board room"""
-        
+
         status = {
             "project_id": self.project_id,
             "phase": self._get_current_phase(),
@@ -441,12 +440,12 @@ class BoardRoom:
             "metrics": self.metrics_engine.get_current_metrics() if self.metrics_engine else {},
             "execution_progress": self.executor.get_progress() if self.executor else {}
         }
-        
+
         return status
-    
+
     def _get_current_phase(self) -> str:
         """Determine current phase"""
-        
+
         if not self.oag:
             return "startup"
         elif not self.executor:

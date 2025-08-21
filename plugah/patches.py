@@ -3,21 +3,23 @@ JSON-Patch helpers (RFC6902) + audit log
 """
 
 import json
-import jsonpatch
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Any
+
+import jsonpatch
+
 from .oag_schema import OAG
 
 
 class PatchManager:
     """Manage JSON patches for OAG updates"""
-    
-    def __init__(self, oag: OAG, audit_logger: Optional[Any] = None):
+
+    def __init__(self, oag: OAG, audit_logger: Any | None = None):
         self.oag = oag
         self.audit_logger = audit_logger
-        self.patch_history: List[Dict[str, Any]] = []
-    
-    def apply_patch(self, patch_ops: Union[Dict, List[Dict]]) -> bool:
+        self.patch_history: list[dict[str, Any]] = []
+
+    def apply_patch(self, patch_ops: dict | list[dict]) -> bool:
         """
         Apply a JSON patch to the OAG
         
@@ -27,51 +29,51 @@ class PatchManager:
         Returns:
             True if patch was successfully applied
         """
-        
+
         # Ensure patch_ops is a list
         if isinstance(patch_ops, dict):
             patch_ops = [patch_ops]
-        
+
         try:
             # Convert OAG to dict
             oag_dict = self.oag.model_dump()
-            
+
             # Create and apply patch
             patch = jsonpatch.JsonPatch(patch_ops)
             patched_dict = patch.apply(oag_dict)
-            
+
             # Validate and update OAG
             from .oag_schema import validate_oag
             new_oag = validate_oag(patched_dict)
-            
+
             # Update the OAG in place
             self.oag.meta = new_oag.meta
             self.oag.budget = new_oag.budget
             self.oag.nodes = new_oag.nodes
             self.oag.edges = new_oag.edges
-            
+
             # Increment version
             self.oag.meta.version += 1
             self.oag.meta.updated_at = datetime.utcnow()
-            
+
             # Record patch
             self._record_patch(patch_ops, success=True)
-            
+
             return True
-            
+
         except Exception as e:
             # Record failed patch
             self._record_patch(patch_ops, success=False, error=str(e))
             return False
-    
+
     def _record_patch(
         self,
-        patch_ops: List[Dict],
+        patch_ops: list[dict],
         success: bool,
-        error: Optional[str] = None
+        error: str | None = None
     ):
         """Record a patch in history"""
-        
+
         patch_record = {
             "timestamp": datetime.utcnow().isoformat(),
             "version": self.oag.meta.version,
@@ -79,32 +81,32 @@ class PatchManager:
             "success": success,
             "error": error
         }
-        
+
         self.patch_history.append(patch_record)
-        
+
         if self.audit_logger:
             self.audit_logger.log_event("patch_applied" if success else "patch_failed", patch_record)
-    
-    def create_add_node_patch(self, node: Any) -> List[Dict]:
+
+    def create_add_node_patch(self, node: Any) -> list[dict]:
         """Create a patch to add a node"""
-        
+
         return [{
             "op": "add",
             "path": f"/nodes/{node.id}",
             "value": node.model_dump()
         }]
-    
-    def create_remove_node_patch(self, node_id: str) -> List[Dict]:
+
+    def create_remove_node_patch(self, node_id: str) -> list[dict]:
         """Create a patch to remove a node"""
-        
+
         patches = []
-        
+
         # Remove the node
         patches.append({
             "op": "remove",
             "path": f"/nodes/{node_id}"
         })
-        
+
         # Remove edges connected to this node
         for i, edge in enumerate(self.oag.edges):
             if edge.from_id == node_id or edge.to_id == node_id:
@@ -112,23 +114,23 @@ class PatchManager:
                     "op": "remove",
                     "path": f"/edges/{i}"
                 })
-        
+
         return patches
-    
-    def create_update_budget_patch(self, new_policy: str) -> List[Dict]:
+
+    def create_update_budget_patch(self, new_policy: str) -> list[dict]:
         """Create a patch to update budget policy"""
-        
+
         return [{
             "op": "replace",
             "path": "/budget/policy",
             "value": new_policy
         }]
-    
-    def create_downgrade_models_patch(self) -> List[Dict]:
+
+    def create_downgrade_models_patch(self) -> list[dict]:
         """Create a patch to downgrade all models to economy tier"""
-        
+
         patches = []
-        
+
         for node_id, node in self.oag.nodes.items():
             if hasattr(node, 'llm'):
                 patches.append({
@@ -136,31 +138,31 @@ class PatchManager:
                     "path": f"/nodes/{node_id}/llm",
                     "value": "gpt-3.5-turbo"
                 })
-        
+
         return patches
-    
-    def create_task_status_patch(self, task_id: str, new_status: str) -> List[Dict]:
+
+    def create_task_status_patch(self, task_id: str, new_status: str) -> list[dict]:
         """Create a patch to update task status"""
-        
+
         return [{
             "op": "replace",
             "path": f"/nodes/{task_id}/status",
             "value": new_status
         }]
-    
-    def get_patch_history(self) -> List[Dict[str, Any]]:
+
+    def get_patch_history(self) -> list[dict[str, Any]]:
         """Get the patch history"""
         return self.patch_history
-    
+
     def export_patches(self, filepath: str):
         """Export patch history to file"""
-        
+
         with open(filepath, 'w') as f:
             json.dump(self.patch_history, f, indent=2, default=str)
-    
+
     def rollback_to_version(self, target_version: int) -> bool:
         """Rollback OAG to a specific version"""
-        
+
         # This would require storing full OAG snapshots
         # For now, just log the attempt
         if self.audit_logger:
@@ -168,17 +170,17 @@ class PatchManager:
                 "target_version": target_version,
                 "current_version": self.oag.meta.version
             })
-        
+
         return False  # Not implemented
 
 
 class PatchGenerator:
     """Generate patches based on conditions"""
-    
+
     @staticmethod
-    def generate_budget_patch(budget_alert_level: str) -> Optional[List[Dict]]:
+    def generate_budget_patch(budget_alert_level: str) -> list[dict] | None:
         """Generate patch based on budget alert level"""
-        
+
         if budget_alert_level == "emergency":
             return [
                 {
@@ -196,41 +198,41 @@ class PatchGenerator:
                     "value": "balanced"
                 }
             ]
-        
+
         return None
-    
+
     @staticmethod
-    def generate_scope_reduction_patch(tasks_to_remove: List[str]) -> List[Dict]:
+    def generate_scope_reduction_patch(tasks_to_remove: list[str]) -> list[dict]:
         """Generate patch to reduce scope by removing tasks"""
-        
+
         patches = []
-        
+
         for task_id in tasks_to_remove:
             patches.append({
                 "op": "remove",
                 "path": f"/nodes/{task_id}"
             })
-        
+
         return patches
-    
+
     @staticmethod
-    def generate_team_reduction_patch(agents_to_remove: List[str]) -> List[Dict]:
+    def generate_team_reduction_patch(agents_to_remove: list[str]) -> list[dict]:
         """Generate patch to reduce team size"""
-        
+
         patches = []
-        
+
         for agent_id in agents_to_remove:
             # Remove agent
             patches.append({
                 "op": "remove",
                 "path": f"/nodes/{agent_id}"
             })
-            
+
             # Reassign their tasks (simplified - would need more logic)
             patches.append({
                 "op": "replace",
                 "path": "/meta/updated_at",
                 "value": datetime.utcnow().isoformat()
             })
-        
+
         return patches

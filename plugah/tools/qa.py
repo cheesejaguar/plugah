@@ -2,24 +2,25 @@
 QA and testing tool stubs
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from crewai_tools import BaseTool
 
 
 class QATool(BaseTool):
     """QA and testing tool stub"""
-    
+
     name: str = "qa_tool"
     description: str = "Run tests and quality checks"
-    
+
     def _run(
         self,
         test_type: str,
         target: str,
-        config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        config: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Run tests"""
-        
+
         # Stub implementation
         test_results = {
             "unit": {
@@ -46,32 +47,32 @@ class QATool(BaseTool):
                 "error_rate": 0.01
             }
         }
-        
+
         return {
             "test_type": test_type,
             "target": target,
             "results": test_results.get(test_type, {"status": "completed"}),
             "summary": f"Ran {test_type} tests on {target}"
         }
-    
+
     async def _arun(
         self,
         test_type: str,
         target: str,
-        config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        config: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Async test execution"""
         return self._run(test_type, target, config)
-    
+
     def validate_output(self, output: Any, expected: Any) -> bool:
         """Validate output against expected"""
-        
+
         # Stub validation
         return str(output) == str(expected)
-    
-    def check_quality_metrics(self, code_path: str) -> Dict[str, float]:
+
+    def check_quality_metrics(self, code_path: str) -> dict[str, float]:
         """Check code quality metrics"""
-        
+
         # Stub metrics
         return {
             "complexity": 5.2,

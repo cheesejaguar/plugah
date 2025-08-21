@@ -2,13 +2,12 @@
 Event logging, run directories, artifacts, status timelines
 """
 
-import os
 import json
 import shutil
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Optional
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 
 class EventType(str, Enum):
@@ -24,49 +23,49 @@ class EventType(str, Enum):
 
 class AuditLogger:
     """Log events and manage run artifacts"""
-    
+
     def __init__(self, project_id: str, base_dir: str = ".runs"):
         self.project_id = project_id
         self.base_dir = Path(base_dir)
         self.run_dir = self.base_dir / project_id
-        self.events: List[Dict[str, Any]] = []
-        
+        self.events: list[dict[str, Any]] = []
+
         # Create run directory
         self._setup_directories()
-    
+
     def _setup_directories(self):
         """Set up the run directory structure"""
-        
+
         self.run_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create subdirectories
         (self.run_dir / "artifacts").mkdir(exist_ok=True)
         (self.run_dir / "logs").mkdir(exist_ok=True)
         (self.run_dir / "patches").mkdir(exist_ok=True)
         (self.run_dir / "metrics").mkdir(exist_ok=True)
-    
+
     def log_event(
         self,
         event_type: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         level: str = "info"
     ):
         """Log an event"""
-        
+
         event = {
             "timestamp": datetime.utcnow().isoformat(),
             "type": event_type,
             "level": level,
             "data": data
         }
-        
+
         self.events.append(event)
-        
+
         # Write to event log file
         log_file = self.run_dir / "logs" / "events.jsonl"
         with open(log_file, 'a') as f:
             f.write(json.dumps(event, default=str) + '\n')
-    
+
     def save_artifact(
         self,
         artifact_name: str,
@@ -74,9 +73,9 @@ class AuditLogger:
         artifact_type: str = "json"
     ):
         """Save an artifact"""
-        
+
         artifact_path = self.run_dir / "artifacts" / artifact_name
-        
+
         if artifact_type == "json":
             with open(f"{artifact_path}.json", 'w') as f:
                 json.dump(content, f, indent=2, default=str)
@@ -87,47 +86,47 @@ class AuditLogger:
             # Binary or other
             with open(artifact_path, 'wb') as f:
                 f.write(content)
-        
+
         self.log_event("artifact_saved", {
             "name": artifact_name,
             "type": artifact_type,
             "path": str(artifact_path)
         })
-    
-    def save_oag(self, oag: Any, version: Optional[int] = None):
+
+    def save_oag(self, oag: Any, version: int | None = None):
         """Save OAG snapshot"""
-        
+
         filename = f"oag_v{version}" if version else "oag_current"
         self.save_artifact(filename, oag.model_dump(), "json")
-    
-    def save_prd(self, prd: Dict[str, Any]):
+
+    def save_prd(self, prd: dict[str, Any]):
         """Save PRD"""
-        
+
         self.save_artifact("prd", prd, "json")
-    
-    def save_metrics_snapshot(self, metrics: Dict[str, Any]):
+
+    def save_metrics_snapshot(self, metrics: dict[str, Any]):
         """Save metrics snapshot"""
-        
+
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         filename = f"metrics_{timestamp}"
-        
+
         metrics_path = self.run_dir / "metrics" / f"{filename}.json"
         with open(metrics_path, 'w') as f:
             json.dump(metrics, f, indent=2, default=str)
-    
-    def save_patch(self, patch: Dict[str, Any], patch_num: int):
+
+    def save_patch(self, patch: dict[str, Any], patch_num: int):
         """Save a patch"""
-        
+
         patch_path = self.run_dir / "patches" / f"patch_{patch_num:04d}.json"
         with open(patch_path, 'w') as f:
             json.dump(patch, f, indent=2, default=str)
-    
-    def get_timeline(self) -> List[Dict[str, Any]]:
+
+    def get_timeline(self) -> list[dict[str, Any]]:
         """Get event timeline"""
-        
+
         # Sort events by timestamp
         sorted_events = sorted(self.events, key=lambda x: x["timestamp"])
-        
+
         # Create timeline with key events
         timeline = []
         for event in sorted_events:
@@ -137,15 +136,15 @@ class AuditLogger:
                     "event": event["type"],
                     "summary": self._summarize_event(event)
                 })
-        
+
         return timeline
-    
-    def _summarize_event(self, event: Dict[str, Any]) -> str:
+
+    def _summarize_event(self, event: dict[str, Any]) -> str:
         """Create a summary for an event"""
-        
+
         event_type = event["type"]
         data = event.get("data", {})
-        
+
         if event_type == "startup":
             return f"Started discovery for: {data.get('problem', 'unknown')}"
         elif event_type == "planning":
@@ -156,10 +155,10 @@ class AuditLogger:
             return f"Completed with cost: ${data.get('total_cost', 0):.2f}"
         else:
             return event_type
-    
-    def generate_summary_report(self) -> Dict[str, Any]:
+
+    def generate_summary_report(self) -> dict[str, Any]:
         """Generate a summary report of the run"""
-        
+
         report = {
             "project_id": self.project_id,
             "run_dir": str(self.run_dir),
@@ -169,85 +168,85 @@ class AuditLogger:
             "patches_applied": self._count_patches(),
             "final_status": self._get_final_status()
         }
-        
+
         # Save the report
         self.save_artifact("summary_report", report, "json")
-        
+
         return report
-    
-    def _calculate_statistics(self) -> Dict[str, Any]:
+
+    def _calculate_statistics(self) -> dict[str, Any]:
         """Calculate run statistics"""
-        
+
         stats = {
             "total_events": len(self.events),
             "errors": sum(1 for e in self.events if e.get("level") == "error"),
             "patches": sum(1 for e in self.events if "patch" in e.get("type", "")),
             "budget_alerts": sum(1 for e in self.events if "budget" in e.get("type", ""))
         }
-        
+
         # Calculate duration if we have start and end
         if self.events:
             start_time = self.events[0]["timestamp"]
             end_time = self.events[-1]["timestamp"]
             # Simple string comparison for ISO format
             stats["duration"] = "calculated_offline"
-        
+
         return stats
-    
-    def _list_artifacts(self) -> List[str]:
+
+    def _list_artifacts(self) -> list[str]:
         """List all artifacts"""
-        
+
         artifacts_dir = self.run_dir / "artifacts"
         if artifacts_dir.exists():
             return [f.name for f in artifacts_dir.iterdir()]
         return []
-    
+
     def _count_patches(self) -> int:
         """Count patches applied"""
-        
+
         patches_dir = self.run_dir / "patches"
         if patches_dir.exists():
             return len(list(patches_dir.glob("patch_*.json")))
         return 0
-    
+
     def _get_final_status(self) -> str:
         """Determine final status"""
-        
+
         # Check for completion event
         for event in reversed(self.events):
             if event["type"] == "completion":
                 return "completed"
             elif event["type"] == "error" and event.get("level") == "critical":
                 return "failed"
-        
+
         return "in_progress"
-    
-    def export_full_log(self, output_path: Optional[str] = None):
+
+    def export_full_log(self, output_path: str | None = None):
         """Export full event log"""
-        
+
         if not output_path:
             output_path = self.run_dir / "full_log.json"
-        
+
         with open(output_path, 'w') as f:
             json.dump({
                 "project_id": self.project_id,
                 "events": self.events,
                 "summary": self.generate_summary_report()
             }, f, indent=2, default=str)
-    
+
     def cleanup_old_runs(self, keep_last: int = 10):
         """Clean up old run directories"""
-        
+
         if not self.base_dir.exists():
             return
-        
+
         # Get all run directories sorted by modification time
         run_dirs = sorted(
             [d for d in self.base_dir.iterdir() if d.is_dir()],
             key=lambda x: x.stat().st_mtime,
             reverse=True
         )
-        
+
         # Keep the specified number of recent runs
         for old_dir in run_dirs[keep_last:]:
             if old_dir != self.run_dir:  # Don't delete current run

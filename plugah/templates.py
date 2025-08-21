@@ -2,9 +2,8 @@
 System prompt templates for different role levels and specializations
 """
 
-from typing import Dict, Optional
-from jinja2 import Template
 
+from jinja2 import Template
 
 ROLE_TEMPLATES = {
     "CEO": Template("""
@@ -231,32 +230,32 @@ SPECIALIZATION_TEMPLATES = {
 You specialize in product discovery and user research.
 Your focus is understanding user needs, market fit, and success criteria.
 """),
-    
+
     "Tech Architect": Template("""
 You specialize in system design and technical architecture.
 Your focus is on scalability, reliability, and technical feasibility.
 """),
-    
+
     "Data Engineer": Template("""
 You specialize in data pipelines and analytics infrastructure.
 Your focus is on data quality, processing efficiency, and insights delivery.
 """),
-    
+
     "Frontend Engineer": Template("""
 You specialize in user interface and experience implementation.
 Your focus is on responsive design, performance, and accessibility.
 """),
-    
+
     "Backend Engineer": Template("""
 You specialize in server-side logic and API development.
 Your focus is on reliability, security, and performance.
 """),
-    
+
     "QA Engineer": Template("""
 You specialize in quality assurance and testing.
 Your focus is on test coverage, bug detection, and quality metrics.
 """),
-    
+
     "DevOps Engineer": Template("""
 You specialize in deployment, monitoring, and infrastructure.
 Your focus is on CI/CD, observability, and system reliability.
@@ -268,24 +267,24 @@ def compose_system_prompt(
     role: str,
     level: str,
     project_title: str,
-    domain: Optional[str] = None,
-    specialization: Optional[str] = None,
-    context: Optional[Dict] = None
+    domain: str | None = None,
+    specialization: str | None = None,
+    context: dict | None = None
 ) -> str:
     """Compose a system prompt for an agent based on role and context"""
-    
+
     context = context or {}
-    
+
     # Get base template for role level
     level_key = level.upper() if level != "C_SUITE" else role.upper()
     template = ROLE_TEMPLATES.get(level_key, ROLE_TEMPLATES["IC"])
-    
+
     # Add specialization if provided
     prompt = ""
     if specialization and specialization in SPECIALIZATION_TEMPLATES:
         spec_template = SPECIALIZATION_TEMPLATES[specialization]
         prompt = spec_template.render() + "\n\n"
-    
+
     # Render main template
     prompt += template.render(
         role=role,
@@ -294,7 +293,7 @@ def compose_system_prompt(
         specialization=specialization or role,
         **context
     )
-    
+
     return prompt
 
 

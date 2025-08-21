@@ -9,7 +9,10 @@ from typing import Dict, Any, AsyncGenerator
 import asyncio
 import json
 
-from .deps import get_session, update_session
+try:
+    from .deps import get_session, update_session
+except ImportError:
+    from deps import get_session, update_session
 
 router = APIRouter()
 

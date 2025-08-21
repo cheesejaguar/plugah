@@ -3,7 +3,6 @@ Tool and role-template registry with capabilities, tags, and selectors
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Set
 from enum import Enum
 
 
@@ -22,7 +21,7 @@ class Tool:
     id: str
     module_path: str
     category: ToolCategory
-    tags: List[str]
+    tags: list[str]
     cost_tier: int = 1  # 1=cheap, 2=moderate, 3=expensive
     description: str = ""
 
@@ -30,9 +29,9 @@ class Tool:
 @dataclass
 class RolePreferences:
     role: str
-    preferred_tools: List[str]
-    required_tools: List[str]
-    excluded_tools: List[str]
+    preferred_tools: list[str]
+    required_tools: list[str]
+    excluded_tools: list[str]
 
 
 # Tool Registry
@@ -175,27 +174,27 @@ MODEL_TIERS = {
 
 class ToolSelector:
     """Select appropriate tools based on role, task, and budget"""
-    
+
     @staticmethod
     def select_tools(
         role: str,
         task_description: str,
         budget_policy: str,
         available_budget: float
-    ) -> List[str]:
+    ) -> list[str]:
         """Select tools for a role/task combination"""
-        
+
         # Get role preferences
         prefs = ROLE_PREFERENCES.get(role.upper().replace(" ", "_"))
         if not prefs:
             # Default selection for unknown roles
             return ["web_search", "writer"]
-        
+
         selected = []
-        
+
         # Always include required tools
         selected.extend(prefs.required_tools)
-        
+
         # Add preferred tools based on budget policy
         if budget_policy == "aggressive":
             # Use all preferred tools
@@ -212,10 +211,10 @@ class ToolSelector:
                 tool = TOOL_REGISTRY.get(tool_id)
                 if tool and tool.cost_tier == 1:
                     selected.append(tool_id)
-        
+
         # Remove excluded tools
         selected = [t for t in selected if t not in prefs.excluded_tools]
-        
+
         # Remove duplicates while preserving order
         seen = set()
         unique = []
@@ -223,9 +222,9 @@ class ToolSelector:
             if tool not in seen:
                 seen.add(tool)
                 unique.append(tool)
-        
+
         return unique
-    
+
     @staticmethod
     def select_model(
         role_level: str,
@@ -233,7 +232,7 @@ class ToolSelector:
         task_complexity: str = "medium"
     ) -> str:
         """Select appropriate model based on role and budget"""
-        
+
         if budget_policy == "conservative":
             return MODEL_TIERS["economy"]["name"]
         elif budget_policy == "aggressive":
@@ -246,11 +245,11 @@ class ToolSelector:
                 return MODEL_TIERS["standard"]["name"]
             else:
                 return MODEL_TIERS["economy"]["name"]
-    
+
     @staticmethod
-    def estimate_tool_cost(tool_ids: List[str]) -> float:
+    def estimate_tool_cost(tool_ids: list[str]) -> float:
         """Estimate cost for using a set of tools"""
-        
+
         total_cost = 0.0
         for tool_id in tool_ids:
             tool = TOOL_REGISTRY.get(tool_id)
@@ -258,13 +257,13 @@ class ToolSelector:
                 # Simple cost model: tier 1 = $0.01, tier 2 = $0.05, tier 3 = $0.10
                 cost_map = {1: 0.01, 2: 0.05, 3: 0.10}
                 total_cost += cost_map.get(tool.cost_tier, 0.01)
-        
+
         return total_cost
 
 
-def get_specialization_for_domain(domain: str, role: str) -> Optional[str]:
+def get_specialization_for_domain(domain: str, role: str) -> str | None:
     """Get appropriate specialization based on domain and role"""
-    
+
     domain_specializations = {
         "web": {
             "Engineer": "Frontend Engineer",
@@ -287,12 +286,12 @@ def get_specialization_for_domain(domain: str, role: str) -> Optional[str]:
             "Manager": "Product Manager"
         }
     }
-    
+
     domain_map = domain_specializations.get(domain.lower(), {})
-    
+
     # Try to match role keywords
     for key, specialization in domain_map.items():
         if key.lower() in role.lower():
             return specialization
-    
+
     return None

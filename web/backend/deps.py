@@ -2,7 +2,7 @@
 Dependencies and utilities for FastAPI
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 import uuid
