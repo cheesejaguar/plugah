@@ -2,8 +2,8 @@
 Converts OAG into CrewAI Agent & Task instances
 """
 
-from typing import Any
 import os
+from typing import Any
 
 from crewai import Agent, Crew, Task
 
