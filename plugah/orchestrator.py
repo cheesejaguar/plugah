@@ -508,7 +508,13 @@ class BoardRoom:
             okr_rows: list[tuple[str, str, str]] = []
             for agent in oag.get_agents().values():
                 for okr in getattr(agent, "okrs", []) or []:
-                    okr_rows.append((getattr(agent, "role", agent.id), okr.objective.title, okr.objective.description))
+                    okr_rows.append(
+                        (
+                            getattr(agent, "role", agent.id),
+                            okr.objective.title,
+                            okr.objective.description,
+                        )
+                    )
 
             lines += ["", "## Organization OKR Roll-up"]
             if okr_rows:
@@ -522,7 +528,14 @@ class BoardRoom:
             kpi_rows: list[tuple[str, str, str, str]] = []
             for agent in oag.get_agents().values():
                 for kpi in getattr(agent, "kpis", []) or []:
-                    kpi_rows.append((getattr(agent, "role", agent.id), kpi.metric, str(kpi.target), kpi.direction.value))
+                    kpi_rows.append(
+                        (
+                            getattr(agent, "role", agent.id),
+                            kpi.metric,
+                            str(kpi.target),
+                            kpi.direction.value,
+                        )
+                    )
 
             lines += ["", "## KPI Summary"]
             if kpi_rows:
@@ -588,11 +601,16 @@ class BoardRoom:
                     lines += ["", "### Parent OKRs", "", "| Objective | Description |", "|---|---|"]
                     for okr in parent_okrs:
                         lines.append(f"| {okr.objective.title} | {okr.objective.description} |")
-                if parent_kpis:
-                    lines += ["", "### Parent KPIs", "", "| Metric | Target | Direction |", "|---|---|---|"]
-                    for kpi in parent_kpis:
-                        lines.append(f"| {kpi.metric} | {kpi.target} | {kpi.direction.value} |")
-            ]
+            if parent_kpis:
+                lines += [
+                    "",
+                    "### Parent KPIs",
+                    "",
+                    "| Metric | Target | Direction |",
+                    "|---|---|---|",
+                ]
+                for kpi in parent_kpis:
+                    lines.append(f"| {kpi.metric} | {kpi.target} | {kpi.direction.value} |")
             path.write_text("\n".join(lines))
 
     def to_dict(self) -> dict[str, Any]:
