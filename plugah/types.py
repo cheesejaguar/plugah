@@ -179,4 +179,3 @@ class Event:
             "acc_cost": self.acc_cost,
             "metadata": self.metadata,
         }
-

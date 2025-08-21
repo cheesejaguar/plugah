@@ -56,7 +56,9 @@ class Materializer:
 
         return agents, tasks, id_map
 
-    def _materialize_agent(self, oag: OAG, spec: AgentSpec, llm_provider: str | None = None) -> Agent:
+    def _materialize_agent(
+        self, oag: OAG, spec: AgentSpec, llm_provider: str | None = None
+    ) -> Agent:
         """Convert AgentSpec to CrewAI Agent"""
 
         # Load tools

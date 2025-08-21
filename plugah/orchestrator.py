@@ -77,7 +77,9 @@ class BoardRoom:
             raise InvalidInput("Problem statement is required", {"field": "problem"})
 
         if budget_usd <= 0:
-            raise InvalidInput("Budget must be positive", {"field": "budget_usd", "value": budget_usd})
+            raise InvalidInput(
+                "Budget must be positive", {"field": "budget_usd", "value": budget_usd}
+            )
 
         # Convert string policy to enum if needed
         if isinstance(policy, str):
@@ -151,7 +153,9 @@ class BoardRoom:
             try:
                 policy = BudgetPolicy(policy.lower())
             except ValueError:
-                raise InvalidInput(f"Invalid budget policy: {policy}", {"field": "policy"}) from None
+                raise InvalidInput(
+                    f"Invalid budget policy: {policy}", {"field": "policy"}
+                ) from None
 
         self._state["answers"] = answers
 
@@ -241,7 +245,9 @@ class BoardRoom:
             try:
                 policy = BudgetPolicy(policy.lower())
             except ValueError:
-                raise InvalidInput(f"Invalid budget policy: {policy}", {"field": "policy"}) from None
+                raise InvalidInput(
+                    f"Invalid budget policy: {policy}", {"field": "policy"}
+                ) from None
 
         if self.mock_mode:
             # Create mock OAG for CI testing

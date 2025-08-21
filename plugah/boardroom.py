@@ -60,6 +60,7 @@ class Startup:
 
         # If explicitly in mock mode, keep deterministic output
         import os
+
         if os.getenv("PLUGAH_MODE", "").lower() == "mock":
             return [
                 "Who are the primary users/customers for this solution?",

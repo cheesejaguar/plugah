@@ -8,21 +8,27 @@ Usage:
 
 from __future__ import annotations
 
+
 class LLM:
     def __init__(self, model: str | None = None, temperature: float = 0.2):
         import os
 
-        self.model = model or os.getenv("OPENAI_MODEL", os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano"))
+        self.model = model or os.getenv(
+            "OPENAI_MODEL", os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano")
+        )
         self.temperature = temperature
 
     def _has_openai(self) -> bool:
         try:
             import openai  # noqa: F401
+
             return True
         except Exception:
             return False
 
-    def reason(self, system: str, user: str, *, model: str | None = None, temperature: float | None = None) -> str | None:
+    def reason(
+        self, system: str, user: str, *, model: str | None = None, temperature: float | None = None
+    ) -> str | None:
         """Call OpenAI Chat Completions API and return the assistant text.
 
         Returns None if the SDK is not available or the API call fails.
