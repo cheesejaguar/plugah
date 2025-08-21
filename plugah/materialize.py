@@ -8,7 +8,7 @@ from typing import Any
 from crewai import Agent, Crew, Task
 
 from .cache import get_cache
-from .oag_schema import AgentSpec, OAG, RoleLevel, TaskSpec
+from .oag_schema import OAG, AgentSpec, RoleLevel, TaskSpec
 from .registry import TOOL_REGISTRY
 
 
