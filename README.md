@@ -266,6 +266,7 @@ See the `examples/` directory for:
 - We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and setup.
 - Please review our [Code of Conduct](CODE_OF_CONDUCT.md).
 - Security issues? See our [Security Policy](SECURITY.md).
+- For a concise contributor quickstart, read [AGENTS.md](AGENTS.md).
 
 ## License
 

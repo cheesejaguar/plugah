@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to Plugah! We welcome contributions from the community and are grateful for any help you can provide.
 
+For a concise contributor overview (structure, commands, style), see the repository guide in [AGENTS.md](AGENTS.md).
+
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
