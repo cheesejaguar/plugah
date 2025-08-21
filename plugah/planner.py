@@ -3,7 +3,7 @@ Plans OAG from problem description and discovery answers
 """
 
 import uuid
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from .oag_schema import (
     KPI,
