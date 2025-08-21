@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -43,7 +42,7 @@ async def test_subteam_prd_created_after_planning(monkeypatch, tmp_path):
         problem="Project",
         budget_usd=100.0,
     )
-    oag = await br.plan_organization(prd=prd, budget_usd=100.0, policy=BudgetPolicy.BALANCED)
+    await br.plan_organization(prd=prd, budget_usd=100.0, policy=BudgetPolicy.BALANCED)
 
     # Expect some team PRDs (e.g., for VP/Director/Manager with reports)
     teams_dir = Path(".runs") / br.project_id / "teams"

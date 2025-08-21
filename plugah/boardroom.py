@@ -70,9 +70,9 @@ class Startup:
                 "Are there any existing systems or data sources to integrate with?",
             ]
 
-        from .llm import LLM
         import json
         import re
+        from .llm import LLM
 
         system = (
             "You are a senior product discovery specialist. "
