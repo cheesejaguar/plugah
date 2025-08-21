@@ -76,10 +76,15 @@ jobs:
         path: dist/
     
     - name: Test installation from wheel
+      shell: bash
       run: |
-        pip install dist/*.whl
+        set -euo pipefail
+        WHEEL=$(ls dist/*.whl | head -n 1)
+        echo "Installing wheel: $WHEEL"
+        python -m pip install "$WHEEL"
         python -c "import plugah; print(f'Plugah {plugah.__version__} installed successfully')"
-        plugah-demo --help
+        # Validate CLI entrypoint via module to avoid PATH issues on Windows
+        python -m plugah.demo.demo_cli --help
 
   publish-test-pypi:
     name: Publish to Test PyPI
