@@ -178,10 +178,34 @@ jobs:
         path: web/frontend/dist/
     
     - name: Start backend server
-      working-directory: web/backend
       run: |
-        uvicorn main:app --host 0.0.0.0 --port 8000 &
-        sleep 5
+        # Set required environment variables
+        export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-test-key}"
+        export DEFAULT_LLM_MODEL="gpt-5-nano"
+        export PLUGAH_MODE="mock"
+        # Start server using Python module path
+        python -m uvicorn web.backend.main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
+        SERVER_PID=$!
+        # Wait for server to be ready
+        for i in {1..30}; do
+          if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+            echo "Server is ready!"
+            break
+          fi
+          if ! ps -p $SERVER_PID > /dev/null; then
+            echo "Server process died! Logs:"
+            cat server.log
+            exit 1
+          fi
+          echo "Waiting for server... (attempt $i/30)"
+          sleep 1
+        done
+        # Final check
+        if ! curl -f http://localhost:8000/health >/dev/null 2>&1; then
+          echo "Server failed to start! Logs:"
+          cat server.log
+          exit 1
+        fi
     
     - name: Test API health
       run: |
