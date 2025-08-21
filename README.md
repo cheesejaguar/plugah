@@ -2,8 +2,7 @@
 
 ![CI](https://github.com/cheesejaguar/plugah/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/cheesejaguar/plugah/branch/main/graph/badge.svg)](https://codecov.io/gh/cheesejaguar/plugah)
-[![PyPI version](https://img.shields.io/pypi/v/plugah.svg)](https://pypi.org/project/plugah/)
-[![Python versions](https://img.shields.io/pypi/pyversions/plugah.svg)](https://pypi.org/project/plugah/)
+[![Python versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://github.com/cheesejaguar/plugah)
 [![License: MIT](https://img.shields.io/github/license/cheesejaguar/plugah.svg)](LICENSE)
 
 Multi-agent orchestration system with organizational hierarchy - dynamically generates and manages AI agent organizations to deliver projects within budget constraints.
@@ -21,12 +20,43 @@ Plugah.ai creates a virtual organization of AI agents to tackle complex projects
 
 ## Installation
 
-```bash
-# Install from PyPI
-pip install plugah>=0.2
+> **Note**: This package is not yet published on PyPI. Please use the git submodule method below for installation.
 
-# Or using uv (recommended for development)
-uv pip install plugah>=0.2
+### Using as a Git Submodule (Recommended)
+
+Add plugah as a submodule to your project:
+
+```bash
+# Add the submodule to your project
+git submodule add https://github.com/cheesejaguar/plugah.git plugah
+
+# Initialize and update the submodule
+git submodule update --init --recursive
+
+# Install the package in development mode
+pip install -e ./plugah
+
+# Or using uv (recommended)
+uv pip install -e ./plugah
+```
+
+To update the submodule to the latest version:
+
+```bash
+cd plugah
+git pull origin main
+cd ..
+git add plugah
+git commit -m "Update plugah submodule to latest version"
+```
+
+### Future PyPI Installation
+
+Once published, you'll be able to install directly from PyPI:
+
+```bash
+# Coming soon!
+pip install plugah>=0.2
 ```
 
 ## Quick Start
