@@ -175,8 +175,8 @@ jobs:
         path: web/frontend/dist/
     
     - name: Start backend server
+      working-directory: web/backend
       run: |
-        cd web/backend
         uvicorn main:app --host 0.0.0.0 --port 8000 &
         sleep 5
     
