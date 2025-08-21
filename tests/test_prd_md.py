@@ -60,7 +60,7 @@ async def test_prd_rollups_and_parent_link(monkeypatch, tmp_path):
     monkeypatch.delenv("PLUGAH_MODE", raising=False)
     monkeypatch.chdir(tmp_path)
 
-    from plugah import BoardRoom, BudgetPolicy, PRD
+    from plugah import PRD, BoardRoom, BudgetPolicy
 
     br = BoardRoom()
     # Seed a minimal PRD so plan_organization will write the enriched root PRD with roll-ups
