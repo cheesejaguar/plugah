@@ -344,6 +344,9 @@ class BoardRoom:
 
         # Generate subteam PRD.md files for managers with reports
         try:
+            # Update root PRD with org roll-ups if PRD exists
+            if self.prd is not None:
+                self._write_root_prd_md(self.prd.to_dict(), self.oag)
             self._write_subteam_prds(self.oag)
         except Exception:
             pass
@@ -455,12 +458,12 @@ class BoardRoom:
         self.oag = oag
 
         # Rewrite PRD.md and subteam PRDs
-        self._write_root_prd_md(prd.to_dict())
+        self._write_root_prd_md(prd.to_dict(), oag)
         self._write_subteam_prds(oag)
 
         return oag
 
-    def _write_root_prd_md(self, prd: dict[str, Any]) -> None:
+    def _write_root_prd_md(self, prd: dict[str, Any], oag: OAG | None = None) -> None:
         """Write the root PRD.md for the current project."""
         from pathlib import Path
 
@@ -476,7 +479,7 @@ class BoardRoom:
         success = prd.get("success_criteria", [])
         constraints = prd.get("constraints", [])
 
-        lines = [
+        lines: list[str] = [
             f"# PRD: {title}",
             "",
             "This document aligns all agents with company OKRs and KPIs.",
@@ -498,6 +501,36 @@ class BoardRoom:
             "## Notes",
             "This PRD follows an AGENTS.md-style instruction manual for agents.",
         ]
+
+        # Append OKR/KPI roll-ups if an org graph is available
+        if oag is not None:
+            # OKRs
+            okr_rows: list[tuple[str, str, str]] = []
+            for agent in oag.get_agents().values():
+                for okr in getattr(agent, "okrs", []) or []:
+                    okr_rows.append((getattr(agent, "role", agent.id), okr.objective.title, okr.objective.description))
+
+            lines += ["", "## Organization OKR Roll-up"]
+            if okr_rows:
+                lines += ["", "| Agent | Objective | Description |", "|---|---|---|"]
+                for role, ot, od in okr_rows:
+                    lines.append(f"| {role} | {ot} | {od} |")
+            else:
+                lines += ["", "_No OKRs defined at the organization level._"]
+
+            # KPIs
+            kpi_rows: list[tuple[str, str, str, str]] = []
+            for agent in oag.get_agents().values():
+                for kpi in getattr(agent, "kpis", []) or []:
+                    kpi_rows.append((getattr(agent, "role", agent.id), kpi.metric, str(kpi.target), kpi.direction.value))
+
+            lines += ["", "## KPI Summary"]
+            if kpi_rows:
+                lines += ["", "| Agent | Metric | Target | Direction |", "|---|---|---|---|"]
+                for role, metric, target, direction in kpi_rows:
+                    lines.append(f"| {role} | {metric} | {target} | {direction} |")
+            else:
+                lines += ["", "_No KPIs defined at the organization level._"]
         prd_path.write_text("\n".join(lines))
 
     def _write_subteam_prds(self, oag: OAG) -> None:
@@ -527,10 +560,12 @@ class BoardRoom:
             okrs = getattr(mgr, "okrs", []) or []
             kpis = getattr(mgr, "kpis", []) or []
 
-            lines = [
+            lines: list[str] = [
                 f"# Team PRD: {getattr(mgr, 'role', manager_id)}",
                 "",
                 "Inherits from ../PRD.md and specifies team OKRs/KPIs and roll-ups.",
+                "",
+                "Parent PRD: [../../PRD.md](../../PRD.md)",
                 "",
                 "## OKRs",
                 *[f"- {okr.objective.title}: {okr.objective.description}" for okr in okrs],
@@ -541,6 +576,22 @@ class BoardRoom:
                 "## Reporting",
                 f"- Reports to: {getattr(oag.get_node(getattr(mgr, 'manager_id', '') or ''), 'role', 'BoardRoom')}",
                 f"- Direct reports: {len(children)}",
+                "",
+                "## Roll-up to Parent",
+            ]
+
+            parent = oag.get_node(getattr(mgr, "manager_id", "") or "")
+            if parent is not None:
+                parent_okrs = getattr(parent, "okrs", []) or []
+                parent_kpis = getattr(parent, "kpis", []) or []
+                if parent_okrs:
+                    lines += ["", "### Parent OKRs", "", "| Objective | Description |", "|---|---|"]
+                    for okr in parent_okrs:
+                        lines.append(f"| {okr.objective.title} | {okr.objective.description} |")
+                if parent_kpis:
+                    lines += ["", "### Parent KPIs", "", "| Metric | Target | Direction |", "|---|---|---|"]
+                    for kpi in parent_kpis:
+                        lines.append(f"| {kpi.metric} | {kpi.target} | {kpi.direction.value} |")
             ]
             path.write_text("\n".join(lines))
 
