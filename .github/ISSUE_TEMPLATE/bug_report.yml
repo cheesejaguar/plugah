@@ -88,6 +88,29 @@ body:
     validations:
       required: true
 
+  - type: textarea
+    id: claude_prompt
+    attributes:
+      label: Claude Code Prompt (Optional)
+      description: Paste a prompt for an agent that understands this repo (Cursor/Claude Code/Codex) to reproduce and fix the bug in a branch with tests and a PR.
+      render: markdown
+      placeholder: |
+        You are Claude Code working in the "plugah" repository.
+
+        Bug:
+        - [Describe the bug and expected behavior]
+
+        Instructions:
+        - Load this repo in your vibecoder of choice (Cursor, Windsurf, VS Code + Continue, Zed).
+        - Create a new branch from `main`: `bugfix/<short-slug>`.
+        - Reproduce the issue; add a failing test under `tests/`.
+        - Implement the fix in `plugah/` with minimal, focused changes.
+        - Run checks: `pytest`, `ruff format && ruff check`, `mypy plugah`.
+        - Update docs if behavior changes.
+        - Commit, push, and open a PR targeting `main` with a concise summary and links to the failing test.
+    validations:
+      required: false
+
   - type: checkboxes
     id: checklist
     attributes:
