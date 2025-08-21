@@ -56,7 +56,7 @@ def test_reorg_updates_root_prd(monkeypatch, tmp_path):
     monkeypatch.setenv("PLUGAH_MODE", "mock")
     monkeypatch.chdir(tmp_path)
 
-    from plugah import BoardRoom, PRD
+    from plugah import PRD, BoardRoom
 
     br = BoardRoom()
 
