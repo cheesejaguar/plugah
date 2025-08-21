@@ -54,7 +54,7 @@ async def main():
         policy=BudgetPolicy.BALANCED
     )
     
-    # Phase 2: Process answers into PRD
+    # Phase 2: Process answers into PRD (OpenAI-backed; mocked if PLUGAH_MODE=mock)
     answers = [
         "Developers and data scientists",
         "Accurate summaries, Fast processing, Easy integration",
