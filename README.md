@@ -316,8 +316,11 @@ Built with:
 
 - Set `OPENAI_API_KEY` in your environment to enable OpenAI calls.
 - Optionally set `OPENAI_MODEL` or `DEFAULT_LLM_MODEL` to override the default model (`gpt-5-nano`).
- - The executor performs a brief "reasoning" call per task to guide execution; when using CrewAI, the reasoning is prepended to the task description to inform the agent.
- - CrewAI execution is enabled by default. To force mock execution only, set `PLUGAH_REAL_EXECUTION=0` (or `false`/`no`).
+- The executor performs a brief "reasoning" call per task to guide execution; when using CrewAI, the reasoning is prepended to the task description to inform the agent.
+- CrewAI execution is enabled by default. To force mock execution only, set `PLUGAH_REAL_EXECUTION=0` (or `false`/`no`).
+
+Quick start:
+- Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The default `DEFAULT_LLM_MODEL` is `gpt-5-nano`.
 
 Example:
 
