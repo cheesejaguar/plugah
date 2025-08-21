@@ -1,0 +1,262 @@
+"""
+Converts OAG into CrewAI Agent & Task instances
+"""
+
+from typing import Dict, List, Tuple, Any, Optional
+from crewai import Agent, Task, Crew
+from .oag_schema import OAG, AgentSpec, TaskSpec
+from .registry import TOOL_REGISTRY
+
+
+class Materializer:
+    """Convert OAG specifications into executable CrewAI components"""
+    
+    def __init__(self):
+        self.tool_cache = {}
+    
+    def materialize(
+        self,
+        oag: OAG,
+        llm_provider: Optional[str] = None
+    ) -> Tuple[Dict[str, Agent], Dict[str, Task], Dict[str, Any]]:
+        """
+        Materialize an OAG into CrewAI agents and tasks
+        
+        Returns:
+            - agents: Dict mapping agent_id to CrewAI Agent
+            - tasks: Dict mapping task_id to CrewAI Task
+            - id_map: Additional mappings for tracking
+        """
+        
+        agents = {}
+        tasks = {}
+        id_map = {}
+        
+        # Materialize agents
+        for agent_id, agent_spec in oag.get_agents().items():
+            agent = self._materialize_agent(agent_spec, llm_provider)
+            agents[agent_id] = agent
+            id_map[agent_id] = {
+                "type": "agent",
+                "crewai_obj": agent,
+                "spec": agent_spec
+            }
+        
+        # Materialize tasks
+        for task_id, task_spec in oag.get_tasks().items():
+            # Get the assigned agent
+            agent = agents.get(task_spec.agent_id)
+            if not agent:
+                # Create a default agent if missing
+                agent = self._create_default_agent(task_spec.agent_id)
+                agents[task_spec.agent_id] = agent
+            
+            task = self._materialize_task(task_spec, agent, oag)
+            tasks[task_id] = task
+            id_map[task_id] = {
+                "type": "task",
+                "crewai_obj": task,
+                "spec": task_spec
+            }
+        
+        return agents, tasks, id_map
+    
+    def _materialize_agent(
+        self,
+        spec: AgentSpec,
+        llm_provider: Optional[str] = None
+    ) -> Agent:
+        """Convert AgentSpec to CrewAI Agent"""
+        
+        # Load tools
+        tools = []
+        for tool_ref in spec.tools:
+            tool = self._load_tool(tool_ref.id, tool_ref.args)
+            if tool:
+                tools.append(tool)
+        
+        # Create role string with level and specialization
+        role_str = f"{spec.role}"
+        if spec.specialization:
+            role_str = f"{spec.specialization} ({spec.role})"
+        
+        # Create agent
+        agent = Agent(
+            role=role_str,
+            goal=self._extract_goal_from_prompt(spec.system_prompt),
+            backstory=self._create_backstory(spec),
+            tools=tools,
+            llm=spec.llm or "gpt-3.5-turbo",
+            max_iter=5,
+            verbose=True,
+            allow_delegation=(spec.level.value in ["C_SUITE", "VP", "DIRECTOR"]),
+            system_template=spec.system_prompt
+        )
+        
+        return agent
+    
+    def _materialize_task(
+        self,
+        spec: TaskSpec,
+        agent: Agent,
+        oag: OAG
+    ) -> Task:
+        """Convert TaskSpec to CrewAI Task"""
+        
+        # Build context from dependencies
+        context_tasks = []
+        dependencies = oag.get_dependencies(spec.id)
+        
+        # Create task description with contract
+        description = self._build_task_description(spec)
+        
+        task = Task(
+            description=description,
+            expected_output=spec.expected_output,
+            agent=agent,
+            context=context_tasks,
+            output_file=f".runs/{oag.meta.project_id}/{spec.id}/output.json"
+        )
+        
+        return task
+    
+    def _load_tool(self, tool_id: str, args: Optional[Dict] = None) -> Optional[Any]:
+        """Load a tool from the registry"""
+        
+        # Check cache
+        cache_key = f"{tool_id}_{str(args)}"
+        if cache_key in self.tool_cache:
+            return self.tool_cache[cache_key]
+        
+        # Get tool definition
+        tool_def = TOOL_REGISTRY.get(tool_id)
+        if not tool_def:
+            return None
+        
+        # For now, return a stub function
+        # In production, this would dynamically import and instantiate
+        def tool_stub(**kwargs):
+            return f"Tool {tool_id} called with {kwargs}"
+        
+        tool_stub.__name__ = tool_id
+        tool_stub.__doc__ = tool_def.description
+        
+        self.tool_cache[cache_key] = tool_stub
+        return tool_stub
+    
+    def _create_default_agent(self, agent_id: str) -> Agent:
+        """Create a default agent for tasks without assigned agents"""
+        
+        return Agent(
+            role="Default Worker",
+            goal="Complete assigned tasks",
+            backstory="A diligent worker ready to tackle any task",
+            tools=[],
+            llm="gpt-3.5-turbo",
+            max_iter=3,
+            verbose=True
+        )
+    
+    def _extract_goal_from_prompt(self, system_prompt: str) -> str:
+        """Extract a goal from the system prompt"""
+        
+        lines = system_prompt.split('\n')
+        for line in lines:
+            if 'responsibility' in line.lower() or 'must' in line.lower():
+                return line.strip()
+        
+        return "Achieve project objectives"
+    
+    def _create_backstory(self, spec: AgentSpec) -> str:
+        """Create a backstory for an agent"""
+        
+        backstory = f"As a {spec.level.value.replace('_', ' ').title()}-level {spec.role}"
+        
+        if spec.specialization:
+            backstory += f" specializing in {spec.specialization}"
+        
+        if spec.okrs:
+            backstory += f", you own {len(spec.okrs)} key objectives"
+        
+        if spec.kpis:
+            backstory += f" and track {len(spec.kpis)} KPIs"
+        
+        backstory += ". You bring expertise and leadership to ensure success."
+        
+        return backstory
+    
+    def _build_task_description(self, spec: TaskSpec) -> str:
+        """Build a comprehensive task description including contract"""
+        
+        desc = f"{spec.description}\n\n"
+        
+        if spec.contract.inputs:
+            desc += "Required Inputs:\n"
+            for inp in spec.contract.inputs:
+                req = "required" if inp.required else "optional"
+                desc += f"- {inp.name} ({inp.dtype}, {req}): {inp.description}\n"
+            desc += "\n"
+        
+        if spec.contract.outputs:
+            desc += "Expected Outputs:\n"
+            for out in spec.contract.outputs:
+                req = "required" if out.required else "optional"
+                desc += f"- {out.name} ({out.dtype}, {req}): {out.description}\n"
+            desc += "\n"
+        
+        desc += f"Definition of Done: {spec.contract.definition_of_done}"
+        
+        return desc
+    
+
+class CrewBuilder:
+    """Build CrewAI Crew from materialized components"""
+    
+    @staticmethod
+    def build_crew(
+        agents: Dict[str, Agent],
+        tasks: Dict[str, Task],
+        oag: OAG
+    ) -> Crew:
+        """Build a CrewAI Crew from agents and tasks"""
+        
+        # Order tasks by dependencies
+        ordered_tasks = CrewBuilder._order_tasks(tasks, oag)
+        
+        # Get unique agents
+        unique_agents = list(agents.values())
+        
+        crew = Crew(
+            agents=unique_agents,
+            tasks=ordered_tasks,
+            verbose=2,
+            process="sequential"  # Could be "hierarchical" for complex orgs
+        )
+        
+        return crew
+    
+    @staticmethod
+    def _order_tasks(tasks: Dict[str, Task], oag: OAG) -> List[Task]:
+        """Order tasks based on dependencies"""
+        
+        import networkx as nx
+        
+        # Build dependency graph
+        G = nx.DiGraph()
+        
+        for task_id in tasks.keys():
+            G.add_node(task_id)
+        
+        for edge in oag.edges:
+            if edge.from_id in tasks and edge.to_id in tasks:
+                G.add_edge(edge.from_id, edge.to_id)
+        
+        # Topological sort
+        try:
+            ordered_ids = list(nx.topological_sort(G))
+        except nx.NetworkXError:
+            # Cycle detected, use original order
+            ordered_ids = list(tasks.keys())
+        
+        # Return tasks in order
+        return [tasks[tid] for tid in ordered_ids if tid in tasks]
