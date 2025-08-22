@@ -62,6 +62,13 @@ demo = [
     "aiofiles>=23.0.0",
     "python-multipart>=0.0.6",
 ]
+http = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+]
+tools = [
+    "httpx>=0.25.0",
+]
 
 [project.scripts]
 plugah-demo = "plugah.demo.demo_cli:main"
