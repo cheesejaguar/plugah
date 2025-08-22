@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Any, AsyncGenerator, Awaitable, Callable, Dict, List, Optional
+from collections.abc import AsyncGenerator, Callable
+from typing import Any
 
-from ..llm_client import LLMClient, LiteLLMClient
 from ..adapters.base import ToolRegistry
+from ..llm_client import LiteLLMClient, LLMClient
 from .discovery import DiscoveryEngine
 from .events import EventBus
-from .models import BudgetPolicy, Event, EventType, OrganizationGraph, PRD
+from .models import PRD, BudgetPolicy, Event, EventType, OrganizationGraph
 from .planner import OrgPlanner
 from .prd import PRDEngine
 from .runner import LocalTaskRunner
@@ -21,10 +22,10 @@ class BoardRoom:
 
     def __init__(
         self,
-        llm: Optional[LLMClient] = None,
-        registry: Optional[ToolRegistry] = None,
-        default_budget_usd: Optional[float] = None,
-        policy: Optional[BudgetPolicy] = None,
+        llm: LLMClient | None = None,
+        registry: ToolRegistry | None = None,
+        default_budget_usd: float | None = None,
+        policy: BudgetPolicy | None = None,
     ) -> None:
         self.llm = llm or LiteLLMClient()
         self.registry = registry or ToolRegistry.default()
@@ -38,12 +39,12 @@ class BoardRoom:
         self.bus = EventBus()
 
         # Phase state
-        self._problem: Optional[str] = None
-        self._questions: List[str] = []
-        self._prd: Optional[PRD] = None
-        self._org: Optional[OrganizationGraph] = None
+        self._problem: str | None = None
+        self._questions: list[str] = []
+        self._prd: PRD | None = None
+        self._org: OrganizationGraph | None = None
 
-    async def startup_phase(self, problem: str, budget_usd: float, policy: BudgetPolicy | str) -> List[str]:
+    async def startup_phase(self, problem: str, budget_usd: float, policy: BudgetPolicy | str) -> list[str]:
         pol = BudgetPolicy(policy) if isinstance(policy, str) else policy
         self._problem = problem
         de = DiscoveryEngine(self.llm)
@@ -54,7 +55,7 @@ class BoardRoom:
             await self.bus.publish(Event(type=EventType.QUESTION, text=q))
         return qs
 
-    async def process_discovery(self, answers: List[str], problem: str, budget_usd: float) -> PRD:
+    async def process_discovery(self, answers: list[str], problem: str, budget_usd: float) -> PRD:
         pe = PRDEngine(self.llm)
         prd = pe.create(problem, answers)
         self._prd = prd
@@ -69,7 +70,7 @@ class BoardRoom:
         await self.bus.publish(Event(type=EventType.PLAN_CREATED, text="Organization planned", prd_id=prd.id))
         return org
 
-    async def execute(self, on_event: Optional[Callable[[Event], Any]] = None) -> Dict[str, Any]:
+    async def execute(self, on_event: Callable[[Event], Any] | None = None) -> dict[str, Any]:
         if not self._org:
             raise ValueError("No organization planned. Call plan_organization first.")
         runner = LocalTaskRunner(self.bus, self.registry)
@@ -83,7 +84,7 @@ class BoardRoom:
                         pass
 
         # Start forwarder if callback supplied
-        forward_task: Optional[asyncio.Task] = None
+        forward_task: asyncio.Task | None = None
         if on_event:
             forward_task = asyncio.create_task(forward_events())
 

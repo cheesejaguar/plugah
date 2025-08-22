@@ -1,4 +1,3 @@
-import os
 
 from plugah.adapters.base import ToolRegistry
 

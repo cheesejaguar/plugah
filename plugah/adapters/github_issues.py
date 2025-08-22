@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
@@ -15,16 +15,16 @@ class GitHubIssuesAdapter(ToolAdapter):
         self._repo = os.getenv("GITHUB_REPO_NAME", "")
         self._dry = os.getenv("DRY_RUN", "").lower() in {"1", "true", "yes"}
 
-    def capabilities(self) -> List[str]:
+    def capabilities(self) -> list[str]:
         return ["create_issue", "list_issues"]
 
-    def _headers(self) -> Dict[str, str]:
+    def _headers(self) -> dict[str, str]:
         headers = {"Accept": "application/vnd.github+json"}
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         return headers
 
-    def dry_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def dry_run(self, payload: dict[str, Any]) -> dict[str, Any]:
         action = payload.get("action")
         if action == "create_issue":
             return {
@@ -45,7 +45,7 @@ class GitHubIssuesAdapter(ToolAdapter):
         else:
             return {"dry_run": True, "error": f"unknown action: {action}"}
 
-    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(self, payload: dict[str, Any]) -> dict[str, Any]:
         if self._dry or not (self._token and self._owner and self._repo):
             return self.dry_run(payload)
 

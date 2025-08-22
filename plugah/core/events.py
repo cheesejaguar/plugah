@@ -5,14 +5,14 @@ Minimal async event bus for publishing Event objects and subscribing via async g
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncGenerator, List
+from collections.abc import AsyncGenerator
 
 from .models import Event
 
 
 class EventBus:
     def __init__(self) -> None:
-        self._subscribers: List[asyncio.Queue[Event]] = []
+        self._subscribers: list[asyncio.Queue[Event]] = []
         self._closed = False
 
     async def publish(self, event: Event) -> None:

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from .models import BudgetPolicy, OrganizationGraph, Role, Tasklet
 
 
@@ -14,8 +12,8 @@ class OrgPlanner:
             Role(name="CFO", goals=["Track cost"], inputs=["Plan"], outputs=["Budget report"]),
         ]
 
-        ics: List[Role] = []
-        tasklets: List[Tasklet] = []
+        ics: list[Role] = []
+        tasklets: list[Tasklet] = []
 
         # Policy hint: fewer ICs if CHEAP, more if FAST
         ic_count = 3

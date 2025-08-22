@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -14,20 +14,20 @@ class GDriveDocsAdapter(ToolAdapter):
         self._dry = os.getenv("DRY_RUN", "").lower() in {"1", "true", "yes"}
         self._parent = os.getenv("GDRIVE_PARENT_FOLDER_ID", "")
         self._cred_path = os.getenv("GOOGLE_CREDENTIALS_PATH", "")
-        self._access_token: Optional[str] = None
+        self._access_token: str | None = None
         if self._cred_path and os.path.exists(self._cred_path):
             try:
-                data = json.loads(open(self._cred_path, "r").read())
+                data = json.loads(open(self._cred_path).read())
                 tok = data.get("access_token") or data.get("token")
                 if tok:
                     self._access_token = tok
             except Exception:
                 self._access_token = None
 
-    def capabilities(self) -> List[str]:
+    def capabilities(self) -> list[str]:
         return ["create_doc"]
 
-    def dry_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def dry_run(self, payload: dict[str, Any]) -> dict[str, Any]:
         return {
             "dry_run": True,
             "action": payload.get("action"),
@@ -35,7 +35,7 @@ class GDriveDocsAdapter(ToolAdapter):
             "title": payload.get("title"),
         }
 
-    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(self, payload: dict[str, Any]) -> dict[str, Any]:
         if self._dry or not (self._access_token and self._parent):
             return self.dry_run(payload)
 

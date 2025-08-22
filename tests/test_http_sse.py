@@ -18,6 +18,7 @@ pytestmark = pytest.mark.skipif(not _fastapi_available(), reason="http extra not
 @pytest.mark.asyncio
 async def test_http_sse_smoke():
     from fastapi.testclient import TestClient
+
     from plugah.contrib.http.app import app
 
     client = TestClient(app)

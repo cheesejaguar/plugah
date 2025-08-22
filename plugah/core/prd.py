@@ -2,20 +2,18 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import Dict, List, Optional
 
-from ..llm_client import LLMClient, LiteLLMClient
+from ..llm_client import LiteLLMClient, LLMClient
 from .models import PRD
-
 
 SLACK_RE = re.compile(r"slack\s+summarizer", re.I)
 
 
 class PRDEngine:
-    def __init__(self, llm: Optional[LLMClient] = None) -> None:
+    def __init__(self, llm: LLMClient | None = None) -> None:
         self.llm = llm or LiteLLMClient()
 
-    def create(self, problem: str, answers: List[str]) -> PRD:
+    def create(self, problem: str, answers: list[str]) -> PRD:
         prd_id = str(uuid.uuid4())
 
         # Slack seeded plan

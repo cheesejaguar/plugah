@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import re
-import uuid
-from typing import Any, Dict, List, Optional
 
-from ..llm_client import LLMClient, LiteLLMClient
-
+from ..llm_client import LiteLLMClient, LLMClient
 
 SLACK_RE = re.compile(r"slack\s+summarizer", re.I)
 
 
 class DiscoveryEngine:
-    def __init__(self, llm: Optional[LLMClient] = None) -> None:
+    def __init__(self, llm: LLMClient | None = None) -> None:
         self.llm = llm or LiteLLMClient()
 
-    def _seeded_questions(self, problem: str) -> List[str]:
+    def _seeded_questions(self, problem: str) -> list[str]:
         if SLACK_RE.search(problem or ""):
             return [
                 "Which workspace and channels are in scope?",
@@ -26,7 +23,7 @@ class DiscoveryEngine:
             ]
         return []
 
-    def generate_questions(self, problem: str, policy: str | None = None) -> List[str]:
+    def generate_questions(self, problem: str, policy: str | None = None) -> list[str]:
         seeded = self._seeded_questions(problem)
         if seeded:
             return seeded[:6]

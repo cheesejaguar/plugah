@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -21,36 +21,36 @@ class PRD(BaseModel):
     id: str
     title: str
     summary: str
-    acceptance_criteria: List[str] = Field(default_factory=list)
-    risks: List[str] = Field(default_factory=list)
-    objective: Optional[str] = None
-    users: Optional[str] = None
-    scope: List[str] = Field(default_factory=list)
-    success_metrics: List[str] = Field(default_factory=list)
-    constraints: List[str] = Field(default_factory=list)
-    initial_workplan: List[str] = Field(default_factory=list)
+    acceptance_criteria: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+    objective: str | None = None
+    users: str | None = None
+    scope: list[str] = Field(default_factory=list)
+    success_metrics: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    initial_workplan: list[str] = Field(default_factory=list)
 
 
 class Role(BaseModel):
     name: str
-    goals: List[str] = Field(default_factory=list)
-    inputs: List[str] = Field(default_factory=list)
-    outputs: List[str] = Field(default_factory=list)
+    goals: list[str] = Field(default_factory=list)
+    inputs: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
 
 
 class Tasklet(BaseModel):
     id: str
     title: str
     role: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class OrganizationGraph(BaseModel):
     prd_id: str
-    c_suite: List[Role]
-    vps: List[Role] = Field(default_factory=list)
-    ics: List[Role] = Field(default_factory=list)
-    tasklets: List[Tasklet] = Field(default_factory=list)
+    c_suite: list[Role]
+    vps: list[Role] = Field(default_factory=list)
+    ics: list[Role] = Field(default_factory=list)
+    tasklets: list[Tasklet] = Field(default_factory=list)
 
 
 class EventType(str, enum.Enum):
@@ -73,11 +73,11 @@ class Event(BaseModel):
     text: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     cost_delta: float = 0.0
-    team: Optional[str] = None
-    role: Optional[str] = None
-    task_id: Optional[str] = None
-    prd_id: Optional[str] = None
-    okr: Optional[Dict[str, Any]] = None
+    team: str | None = None
+    role: str | None = None
+    task_id: str | None = None
+    prd_id: str | None = None
+    okr: dict[str, Any] | None = None
 
     def to_ndjson(self) -> str:
         data = self.model_dump()

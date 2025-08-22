@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-import os
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any
 
+from ..adapters.base import ToolRegistry
 from .events import EventBus
 from .models import Event, EventType, OrganizationGraph
-from ..adapters.base import ToolRegistry
 
 
 class LocalTaskRunner:
-    def __init__(self, bus: EventBus, registry: Optional[ToolRegistry] = None) -> None:
+    def __init__(self, bus: EventBus, registry: ToolRegistry | None = None) -> None:
         self.bus = bus
         self.registry = registry or ToolRegistry.default()
         self._spent = 0.0

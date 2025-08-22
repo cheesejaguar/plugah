@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import asyncio
-import json
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
-from fastapi.responses import PlainTextResponse, StreamingResponse
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 
 from ...core.boardroom import BoardRoom
-from ...core.models import BudgetPolicy, Event
-
+from ...core.models import BudgetPolicy
 
 app = FastAPI(title="Plugah Contrib HTTP", version="0.1")
 
@@ -29,12 +26,12 @@ STATE = AppState()
 
 
 @app.get("/healthz")
-async def healthz() -> Dict[str, str]:
+async def healthz() -> dict[str, str]:
     return {"ok": "true"}
 
 
 @app.post("/start_project")
-async def start_project(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def start_project(payload: dict[str, Any]) -> dict[str, Any]:
     problem = payload.get("problem") or ""
     if not problem:
         raise HTTPException(status_code=400, detail="problem is required")
@@ -45,7 +42,7 @@ async def start_project(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/answer_discovery")
-async def answer_discovery(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def answer_discovery(payload: dict[str, Any]) -> dict[str, Any]:
     answers = payload.get("answers") or []
     problem = payload.get("problem") or "Project"
     budget = float(payload.get("budget_usd") or os.getenv("DEFAULT_BUDGET_USD", 100))
@@ -54,7 +51,7 @@ async def answer_discovery(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @app.post("/execute")
-async def execute(payload: Dict[str, Any], background: BackgroundTasks) -> Dict[str, Any]:
+async def execute(payload: dict[str, Any], background: BackgroundTasks) -> dict[str, Any]:
     budget = float(payload.get("budget_usd") or os.getenv("DEFAULT_BUDGET_USD", 100))
     policy = payload.get("policy") or os.getenv("BUDGET_POLICY", "balanced")
     if not STATE.br._prd:
@@ -67,7 +64,6 @@ async def execute(payload: Dict[str, Any], background: BackgroundTasks) -> Dict[
         try:
             await STATE.br.execute()
         except Exception as e:  # Emit error event
-            from ...core.events import EventBus
             from ...core.models import Event, EventType
 
             await STATE.br.bus.publish(
