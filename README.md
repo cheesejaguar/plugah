@@ -361,3 +361,21 @@ export OPENAI_MODEL=gpt-5-nano
 export PLUGAH_REAL_EXECUTION=0
 pytest  # or run your program
 ```
+
+## MVP Quickstart (LiteLLM + Voice Demo)
+
+For a minimal end-to-end flow compatible with a LiteLLM router and a Pipecat Flows voice gateway, a slim API lives under `plugah/core`:
+
+- `BoardRoom.startup_phase(problem, budget_usd, policy)` → discovery questions
+- `BoardRoom.process_discovery(answers, problem, budget_usd)` → PRD
+- `BoardRoom.plan_organization(prd, budget_usd, policy)` → tiny org
+- `BoardRoom.execute(on_event)` → emits events and returns artifacts/cost
+
+Run the seeded Slack summarizer demo in dry-run:
+
+- `export DRY_RUN=true`
+- `python examples/seed_slack.py`
+
+Optional HTTP endpoints (SSE): `uvicorn plugah.contrib.http.app:app --reload`.
+
+See `docs/mvp-voice-demo.md` and `examples/slack_summarizer_quickstart.md` for details.
