@@ -95,7 +95,7 @@ class Executor:
         self.execution_graph = self._build_execution_graph()
 
         # Materialize agents and tasks
-        agents, tasks, id_map = self.materializer.materialize(self.oag)
+        agents, tasks, _id_map = self.materializer.materialize(self.oag)
 
         # Optionally build a Crew for real execution (behind env flag)
         try:
@@ -419,7 +419,7 @@ class WaveExecutor(Executor):
         waves = self._calculate_waves()
 
         # Materialize agents and tasks
-        agents, tasks, id_map = self.materializer.materialize(self.oag)
+        _agents, tasks, _id_map = self.materializer.materialize(self.oag)
 
         # Execute each wave
         for wave_num, wave_tasks in enumerate(waves):
