@@ -195,9 +195,9 @@ class CostEstimator:
 
     # Model costs per 1k tokens (approximate)
     MODEL_COSTS: ClassVar[dict[str, float]] = {
-        "gpt-4-turbo": 0.01,
-        "gpt-3.5-turbo": 0.002,
-        "gpt-3.5-turbo-instruct": 0.0015,
+        # Blended (input+output)/2 per 1k tokens; source: platform.openai.com/docs/models
+        "gpt-6-sol": 0.006,  # $2 in / $10 out per 1M
+        "gpt-6-luna": 0.0003,  # $0.10 in / $0.50 out per 1M
     }
 
     # Average tokens per interaction by role level
@@ -217,7 +217,7 @@ class CostEstimator:
         """Estimate cost for a task"""
 
         tokens = cls.TOKENS_BY_LEVEL.get(role_level, 500)
-        model_cost = cls.MODEL_COSTS.get(model, 0.002)
+        model_cost = cls.MODEL_COSTS.get(model, 0.0003)
 
         # Cost = (tokens / 1000) * cost_per_1k * interactions
         cost = (tokens / 1000) * model_cost * num_interactions
@@ -232,7 +232,7 @@ class CostEstimator:
 
         # Estimate agent costs
         for agent in oag.get_agents().values():
-            model = agent.llm or "gpt-3.5-turbo"
+            model = agent.llm or "gpt-6-luna"
             # Assume 5 interactions per agent
             cost = cls.estimate_task_cost(agent.level, model, 5)
             total_cost += cost

@@ -345,18 +345,18 @@ Built with:
 ### LLM Configuration
 
 - Set `OPENAI_API_KEY` in your environment to enable OpenAI calls.
-- Optionally set `OPENAI_MODEL` or `DEFAULT_LLM_MODEL` to override the default model (`gpt-5-nano`).
+- Optionally set `OPENAI_MODEL` or `DEFAULT_LLM_MODEL` to override the default model (`gpt-6-luna`).
 - The executor performs a brief "reasoning" call per task to guide execution; when using CrewAI, the reasoning is prepended to the task description to inform the agent.
 - CrewAI execution is enabled by default. To force mock execution only, set `PLUGAH_REAL_EXECUTION=0` (or `false`/`no`).
 
 Quick start:
-- Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The default `DEFAULT_LLM_MODEL` is `gpt-5-nano`.
+- Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The default `DEFAULT_LLM_MODEL` is `gpt-6-luna`.
 
 Example:
 
 ```bash
 export OPENAI_API_KEY=sk-...  # required for live LLM calls
-export OPENAI_MODEL=gpt-5-nano
+export OPENAI_MODEL=gpt-6-luna
 # optional: disable CrewAI and force mock execution
 export PLUGAH_REAL_EXECUTION=0
 pytest  # or run your program

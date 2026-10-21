@@ -33,7 +33,7 @@
 - Keep diffs focused; update docs (README/CONTRIBUTING/CHANGELOG) when relevant.
 
 ## Security & Configuration Tips
-- LLM config: set `OPENAI_API_KEY`; model defaults to `gpt-5-nano` (override with `OPENAI_MODEL` or `DEFAULT_LLM_MODEL`).
+- LLM config: set `OPENAI_API_KEY`; model defaults to `gpt-6-luna` (override with `OPENAI_MODEL` or `DEFAULT_LLM_MODEL`).
 - Execution modes: `PLUGAH_MODE=mock` for CI/testing; `PLUGAH_REAL_EXECUTION=1` to enable CrewAI task execution.
 - See `SECURITY.md` for vulnerability reporting.
 

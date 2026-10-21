@@ -3,18 +3,18 @@ Thin OpenAI client wrapper for reasoning/decision-making calls.
 
 Usage:
     from .llm import LLM
-    text = LLM().reason(model="gpt-5-nano", system="...", user="...")
+    text = LLM().reason(model="gpt-6-luna", system="...", user="...")
 """
 
 from __future__ import annotations
 
 
 class LLM:
-    def __init__(self, model: str | None = None, temperature: float = 0.2):
+    def __init__(self, model: str | None = None, temperature: float | None = None):
         import os
 
         self.model = model or os.getenv(
-            "OPENAI_MODEL", os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano")
+            "OPENAI_MODEL", os.getenv("DEFAULT_LLM_MODEL", "gpt-6-luna")
         )
         self.temperature = temperature
 
@@ -40,13 +40,19 @@ class LLM:
             from openai import OpenAI
 
             client = OpenAI()
+            # GPT-5+/GPT-6 reasoning models reject non-default `temperature`,
+            # so only send it when explicitly requested.
+            kwargs: dict = {}
+            temp = temperature if temperature is not None else self.temperature
+            if temp is not None:
+                kwargs["temperature"] = temp
             resp = client.chat.completions.create(
                 model=model or self.model,
-                temperature=temperature if temperature is not None else self.temperature,
                 messages=[
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
                 ],
+                **kwargs,
             )
 
             choice = resp.choices[0]
