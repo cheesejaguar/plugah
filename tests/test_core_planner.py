@@ -11,4 +11,3 @@ def test_planner_team_sizes_policy():
     assert len(org_cheap.ics) <= len(org_bal.ics)
     assert len(org_fast.ics) >= len(org_bal.ics)
     assert len(org_fast.ics) <= 6
-
