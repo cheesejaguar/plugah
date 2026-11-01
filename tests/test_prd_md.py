@@ -28,7 +28,7 @@ async def test_prd_md_created_on_startup(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_subteam_prd_created_after_planning(monkeypatch, tmp_path):
+async def test_mock_planning_writes_teams_dir_and_rollup(monkeypatch, tmp_path):
     monkeypatch.setenv("PLUGAH_MODE", "mock")
     monkeypatch.chdir(tmp_path)
 
@@ -44,14 +44,15 @@ async def test_subteam_prd_created_after_planning(monkeypatch, tmp_path):
     )
     await br.plan_organization(prd=prd, budget_usd=100.0, policy=BudgetPolicy.BALANCED)
 
-    # Expect some team PRDs (e.g., for VP/Director/Manager with reports)
     teams_dir = Path(".runs") / br.project_id / "teams"
-    assert teams_dir.exists(), "teams/ directory should exist"
-    # There should be at least one team PRD
-    # Subteam PRDs are created for managers with direct reports. In mock mode
-    # there may be zero, but the teams directory should exist.
-    _found = list(teams_dir.rglob("PRD.md"))
-    assert _found is not None  # existence checked by directory assertion above
+    assert teams_dir.is_dir(), "teams/ directory should exist"
+    # Subteam PRDs are only written for managers with direct reports. The mock
+    # org is a lone CEO, so none are expected here (see the non-mock test below).
+    assert list(teams_dir.rglob("PRD.md")) == []
+
+    # Planning re-writes the root PRD with the org roll-up sections
+    root_text = (Path(".runs") / br.project_id / "PRD.md").read_text()
+    assert "Organization OKR Roll-up" in root_text
 
 
 @pytest.mark.asyncio
