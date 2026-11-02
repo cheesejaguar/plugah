@@ -61,7 +61,7 @@ async def test_api():
         questions = await br.startup_phase(
             problem="Build a test application",
             budget_usd=100.0,
-            model_hint="gpt-3.5-turbo",
+            model_hint="gpt-6-luna",
             policy=BudgetPolicy.BALANCED,
         )
         print(f"   ✓ Generated {len(questions)} questions")
@@ -79,7 +79,7 @@ async def test_api():
             answers=answers,
             problem="Build a test application",
             budget_usd=100.0,
-            model_hint="gpt-3.5-turbo",
+            model_hint="gpt-6-luna",
             policy="balanced",  # Test string policy
         )
         print(f"   ✓ PRD created with {len(prd.objectives)} objectives")
@@ -95,7 +95,7 @@ async def test_api():
         oag = await br.plan_organization(
             prd=prd,
             budget_usd=100.0,
-            model_hint="gpt-3.5-turbo",
+            model_hint="gpt-6-luna",
             policy=BudgetPolicy.CONSERVATIVE,
         )
         print(f"   ✓ OAG created with {len(oag.get_agents())} agents and {len(oag.get_tasks())} tasks")

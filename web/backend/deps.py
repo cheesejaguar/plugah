@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     session_timeout_minutes: int = 60
     openai_api_key: Optional[str] = None
     use_real_execution: bool = False
-    default_llm_model: str = "gpt-3.5-turbo"
+    default_llm_model: str = "gpt-6-luna"
     cache_dir: str = ".cache"
     redis_url: Optional[str] = None
 

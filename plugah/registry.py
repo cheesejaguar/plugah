@@ -151,9 +151,10 @@ ROLE_PREFERENCES = {
 
 # Model tiers based on cost
 MODEL_TIERS = {
-    "premium": {"name": "gpt-4-turbo", "cost_per_1k": 0.01, "capability": "high"},
-    "standard": {"name": "gpt-3.5-turbo", "cost_per_1k": 0.002, "capability": "medium"},
-    "economy": {"name": "gpt-3.5-turbo", "cost_per_1k": 0.001, "capability": "basic"},
+    # Blended $/1k tokens (~1:1 input:output) from platform.openai.com/docs/models
+    "premium": {"name": "gpt-6-sol", "cost_per_1k": 0.006, "capability": "high"},
+    "standard": {"name": "gpt-6-luna", "cost_per_1k": 0.0003, "capability": "medium"},
+    "economy": {"name": "gpt-6-luna", "cost_per_1k": 0.0003, "capability": "basic"},
 }
 
 

@@ -92,7 +92,7 @@ class Materializer:
                 system_prompt = f"You are a {spec.level.value} {spec.role} for {oag.meta.title}. Execute tasks precisely to the definition of done."
 
         # Get LLM config from environment (prefer explicit model on spec)
-        llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano")
+        llm_model = spec.llm or os.getenv("DEFAULT_LLM_MODEL", "gpt-6-luna")
 
         # Create agent
         agent = Agent(
@@ -193,7 +193,7 @@ class Materializer:
             goal="Complete assigned tasks",
             backstory="A diligent worker ready to tackle any task",
             tools=[],
-            llm=os.getenv("DEFAULT_LLM_MODEL", "gpt-5-nano"),
+            llm=os.getenv("DEFAULT_LLM_MODEL", "gpt-6-luna"),
             max_iter=3,
             verbose=True,
             system_template=sys_tmpl,

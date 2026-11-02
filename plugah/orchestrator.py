@@ -67,7 +67,7 @@ class BoardRoom:
         Args:
             problem: Problem statement or project description
             budget_usd: Total budget in USD
-            model_hint: Optional model preference (e.g., "gpt-4")
+            model_hint: Optional model preference (e.g., "gpt-6-sol")
             policy: Budget policy (CONSERVATIVE, BALANCED, or AGGRESSIVE)
 
         Returns:
@@ -305,7 +305,7 @@ class BoardRoom:
                 id="ceo",
                 role="CEO",
                 level=RoleLevel.C_SUITE,
-                llm="gpt-5-nano",
+                llm="gpt-6-luna",
                 system_prompt=mock_selector.compose_system_prompt(
                     role="CEO",
                     level=RoleLevel.C_SUITE,

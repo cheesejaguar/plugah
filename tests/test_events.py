@@ -1,5 +1,6 @@
 import asyncio
 import json
+from contextlib import aclosing
 
 import pytest
 
@@ -22,10 +23,13 @@ async def test_event_bus_publish_subscribe():
     events: list[Event] = []
 
     async def consume():
-        async for ev in bus.subscribe():
-            events.append(ev)
-            if len(events) == 2:
-                break
+        # aclosing() finalizes the generator deterministically on break, so the
+        # subscriber is unregistered on every Python version (3.12 defers it to GC).
+        async with aclosing(bus.subscribe()) as stream:
+            async for ev in stream:
+                events.append(ev)
+                if len(events) == 2:
+                    break
 
     consumer = asyncio.create_task(consume())
     await _wait_for_subscribers(bus, 1)

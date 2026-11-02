@@ -25,7 +25,7 @@ async def main():
     questions = await br.startup_phase(
         problem="Build a Slack bot that summarizes conversations",
         budget_usd=100.0,
-        model_hint="gpt-3.5-turbo",
+        model_hint="gpt-6-luna",
         policy=BudgetPolicy.BALANCED
     )
     

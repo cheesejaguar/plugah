@@ -118,7 +118,7 @@ class PatchManager:
         for node_id, node in self.oag.nodes.items():
             if hasattr(node, "llm"):
                 patches.append(
-                    {"op": "replace", "path": f"/nodes/{node_id}/llm", "value": "gpt-3.5-turbo"}
+                    {"op": "replace", "path": f"/nodes/{node_id}/llm", "value": "gpt-6-luna"}
                 )
 
         return patches

@@ -114,21 +114,21 @@ def test_cost_estimator():
 
     # C-suite should be most expensive
     c_suite_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.C_SUITE, "gpt-4-turbo", num_interactions=1
+        RoleLevel.C_SUITE, "gpt-6-sol", num_interactions=1
     )
 
     # IC should be cheapest
-    ic_cost = CostEstimator.estimate_task_cost(RoleLevel.IC, "gpt-3.5-turbo", num_interactions=1)
+    ic_cost = CostEstimator.estimate_task_cost(RoleLevel.IC, "gpt-6-luna", num_interactions=1)
 
     assert c_suite_cost > ic_cost
 
     # More interactions = more cost
     single_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.MANAGER, "gpt-3.5-turbo", num_interactions=1
+        RoleLevel.MANAGER, "gpt-6-luna", num_interactions=1
     )
 
     multi_cost = CostEstimator.estimate_task_cost(
-        RoleLevel.MANAGER, "gpt-3.5-turbo", num_interactions=5
+        RoleLevel.MANAGER, "gpt-6-luna", num_interactions=5
     )
 
     assert multi_cost == single_cost * 5
