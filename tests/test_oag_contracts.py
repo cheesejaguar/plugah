@@ -23,18 +23,29 @@ from plugah.oag_schema import (
 def test_contract_validation():
     """Test that contracts are properly validated"""
 
-    # Valid contract
-    contract = Contract(
-        inputs=[ContractIO(name="input1", dtype="string", description="Test input", required=True)],
-        outputs=[
-            ContractIO(name="output1", dtype="json", description="Test output", required=True)
-        ],
-        definition_of_done="Task is complete when output is generated",
+    # Valid contract parsed from plain data; ContractIO.required defaults to True
+    contract = Contract.model_validate(
+        {
+            "inputs": [{"name": "input1", "dtype": "string", "description": "Test input"}],
+            "outputs": [{"name": "output1", "dtype": "json", "description": "Test output"}],
+            "definition_of_done": "Task is complete when output is generated",
+        }
     )
 
-    assert len(contract.inputs) == 1
-    assert len(contract.outputs) == 1
-    assert contract.definition_of_done != ""
+    assert isinstance(contract.inputs[0], ContractIO)
+    assert contract.inputs[0].required is True
+    assert contract.outputs[0].dtype == "json"
+
+    # inputs/outputs default to empty lists
+    assert Contract(definition_of_done="done").inputs == []
+
+    # definition_of_done is mandatory
+    with pytest.raises(ValidationError):
+        Contract(inputs=[], outputs=[])
+
+    # ContractIO requires name, dtype and description
+    with pytest.raises(ValidationError):
+        ContractIO(name="x", dtype="string")
 
 
 def test_agent_spec_validation():
@@ -129,14 +140,26 @@ def test_validate_oag_function():
 
 
 def test_edge_mapping_validation():
-    """Test that edge mappings are validated"""
+    """Test that edge mappings are validated and drive task dependencies"""
 
     from plugah.oag_schema import Edge
 
     edge = Edge(
         id="edge_1", from_id="task_1", to_id="task_2", mapping={"output_field": "input_field"}
     )
+    assert edge.mapping == {"output_field": "input_field"}
+    assert Edge(id="e", from_id="a", to_id="b").mapping == {}
 
-    assert edge.from_id == "task_1"
-    assert edge.to_id == "task_2"
-    assert "output_field" in edge.mapping
+    # Mapping values must be field names (strings)
+    with pytest.raises(ValidationError):
+        Edge(id="edge_2", from_id="task_1", to_id="task_2", mapping={"out": {"nested": 1}})
+
+    # Edges define the dependency graph used by the OAG
+    oag = OAG(
+        meta=OrgMeta(project_id="p", title="T"),
+        budget=BudgetModel(caps=BudgetCaps(soft_cap_usd=1.0, hard_cap_usd=2.0)),
+        nodes={},
+        edges=[edge, Edge(id="edge_3", from_id="task_0", to_id="task_2")],
+    )
+    assert oag.get_dependencies("task_2") == ["task_1", "task_0"]
+    assert oag.get_dependencies("task_1") == []
